@@ -11,7 +11,7 @@
  *
  * @notes      Has the purpose of containing, using, updating and displaying resources
  *             as well as handling incoming system events.
- *             Once a Scene is created, add it to an AppWindow so it may be used.
+ *             Once a Scene has been created, it can be added to an AppWindow so it can be used.
  */
 
 #include "Scene.h"
