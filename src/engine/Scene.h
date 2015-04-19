@@ -46,7 +46,7 @@ public:
 	AppWindow &getWindow() const;
 
 protected:
-	static sf::Font scene_font;
+	sf::Font scene_font;
 	TGO scene_log;
 
 private:

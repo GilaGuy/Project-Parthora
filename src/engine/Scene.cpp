@@ -29,8 +29,8 @@ m_sceneName(name)
 	std::cout << "Constructed: " << "Scene" << "[" << getID() << "] \"" << getName() << "\"" << std::endl;
 
 	scene_font.loadFromFile("Data/fonts/consolas.ttf");
-	scene_log().setFont(scene_font);
-	scene_log().setCharacterSize(13);
+	scene_log.text().setFont(scene_font);
+	scene_log.text().setCharacterSize(13);
 }
 
 Scene::~Scene()
