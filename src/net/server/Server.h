@@ -1,27 +1,30 @@
 #ifndef SERVER_H
 #define SERVER_H
 
+#include <functional>
 #include <SFML/Network.hpp>
 #include <SFML/System.hpp>
+#include "../Packet.h"
 
-class Client;
+struct Client;
 
 class Server
 {
 public:
-	Server();
+	Server(std::function<void(Packet)> onReceive);
 	~Server();
 
-	void start(unsigned int port);
+	bool start(unsigned int port);
 	void stop();
 
 private:
-	void threadServer();
+	void receiveThread();
 
 	sf::TcpListener listener;
 	sf::SocketSelector selector;
 	std::vector<Client*> clients;
 	sf::Thread serverThread;
+	std::function<void(Packet)> callbackOnReceive;
 
 	bool isRunning;
 };

@@ -9,27 +9,31 @@
  *
  * @programmer Melvin Loho
  *
- * @notes
+ * @notes      Provides an interface for operating the server.
+ *             Handles all of the listening and accepting, socket multiplexing and client handling logic.
  */
 
 #include "Server.h"
 #include "../Protocol.h"
 
-Server::Server() :
+Server::Server(std::function<void(Packet)> onReceive) :
 isRunning(false),
-serverThread(&Server::threadServer, this)
+serverThread(&Server::receiveThread, this),
+callbackOnReceive(onReceive)
 {}
 
 Server::~Server()
 {}
 
-void Server::start(unsigned int port)
+bool Server::start(unsigned int port)
 {
-	if (isRunning) return;
+	if (isRunning) return false;
 
-	listener.listen(port);
+	if (listener.listen(port) != sf::Socket::Done) return false;
 	selector.add(listener);
 	serverThread.launch();
+
+	return true;
 }
 
 void Server::stop()
@@ -48,7 +52,7 @@ void Server::stop()
 	isRunning = false;
 }
 
-void Server::threadServer()
+void Server::receiveThread()
 {
 	isRunning = true;
 
@@ -75,10 +79,13 @@ void Server::threadServer()
 				{
 					if (selector.isReady(c->socket))
 					{
-						sf::Packet packet;
-						if (c->socket.receive(packet) == sf::Socket::Done)
-						{
+						char buffer[PACKET_SIZE]; Packet p;
 
+						size_t received;
+						if (c->socket.receive(buffer, PACKET_SIZE, received) == sf::Socket::Done)
+						{
+							p.decode(buffer);
+							callbackOnReceive(p);
 						}
 					}
 				}
