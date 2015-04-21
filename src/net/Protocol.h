@@ -1,5 +1,5 @@
 /**
- * This file contains all of the common things that will be used by both the server and the client.
+ * Protocol specifications.
  *
  * @date       April 18, 2015
  *
@@ -9,7 +9,7 @@
  *
  * @programmer Melvin Loho
  *
- * @notes
+ * @notes      This file contains all of the common things that will be used by the server and client.
  */
 
 #ifndef PROTOCOL_H
