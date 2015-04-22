@@ -14,7 +14,7 @@
 
 #include "Connection.h"
 
-Connection::Connection(std::function<void(Packet)> onReceive) :
+Connection::Connection(std::function<void(Packet, sf::TcpSocket&)> onReceive) :
 isConnected(false),
 clientThread(&Connection::receiveThread, this),
 callbackOnReceive(onReceive)
@@ -51,7 +51,12 @@ void Connection::receiveThread()
 		if (socket.receive(buffer, PACKET_SIZE, received) == sf::Socket::Done)
 		{
 			p.decode(buffer);
-			callbackOnReceive(p);
+			callbackOnReceive(p, socket);
+		}
+		else
+		{
+			stop();
+			break;
 		}
 	}
 }

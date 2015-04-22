@@ -8,7 +8,7 @@
 class Connection
 {
 public:
-	Connection(std::function<void(Packet)> onReceive);
+	Connection(std::function<void(Packet, sf::TcpSocket&)> onReceive);
 	~Connection();
 
 	bool start(std::string serverIP, unsigned int port);
@@ -19,7 +19,7 @@ private:
 
 	sf::TcpSocket socket;
 	sf::Thread clientThread;
-	std::function<void(Packet)> callbackOnReceive;
+	std::function<void(Packet, sf::TcpSocket&)> callbackOnReceive;
 
 	bool isConnected;
 };

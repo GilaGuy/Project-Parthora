@@ -10,12 +10,16 @@ struct Client;
 
 class Server
 {
+	typedef std::vector<Client*>::iterator client_iterator;
+
 public:
-	Server(std::function<void(Packet)> onReceive);
+	Server(std::function<void(Packet, Client*)> onReceive);
 	~Server();
 
 	bool start(unsigned int port);
 	void stop();
+
+	void killClient(client_iterator& it);
 
 private:
 	void receiveThread();
@@ -24,7 +28,7 @@ private:
 	sf::SocketSelector selector;
 	std::vector<Client*> clients;
 	sf::Thread serverThread;
-	std::function<void(Packet)> callbackOnReceive;
+	std::function<void(Packet, Client*)> callbackOnReceive;
 
 	bool isRunning;
 };

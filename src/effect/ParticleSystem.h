@@ -72,6 +72,7 @@ public:
 	virtual unsigned int build(const ParticleSystem &ps, const unsigned int &m_particleCount, const ParticleSystem::Particle *m_particles, sf::Vertex *m_vertices) = 0;
 	virtual sf::PrimitiveType getType() const = 0;
 	virtual sf::Uint8 getCount() const = 0;
+
 protected:
 	inline void setVertex(sf::Vertex& v, float xP, float yP, float xTC, float yTC, sf::Color c) const
 	{

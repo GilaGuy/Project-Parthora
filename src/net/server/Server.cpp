@@ -16,7 +16,7 @@
 #include "Server.h"
 #include "../Protocol.h"
 
-Server::Server(std::function<void(Packet)> onReceive) :
+Server::Server(std::function<void(Packet, Client*)> onReceive) :
 isRunning(false),
 serverThread(&Server::receiveThread, this),
 callbackOnReceive(onReceive)
@@ -52,6 +52,16 @@ void Server::stop()
 	isRunning = false;
 }
 
+void Server::killClient(client_iterator& it)
+{
+	Client* c = (*it);
+
+	selector.remove(c->socket);
+	c->socket.disconnect();
+	it = clients.erase(it);
+	delete c; c = nullptr;
+}
+
 void Server::receiveThread()
 {
 	isRunning = true;
@@ -60,7 +70,7 @@ void Server::receiveThread()
 	{
 		if (selector.wait())
 		{
-			if (selector.isReady(listener))
+			if (selector.isReady(listener)) // new connections
 			{
 				Client* client = new Client();
 				if (listener.accept(client->socket) == sf::Socket::Done)
@@ -73,10 +83,14 @@ void Server::receiveThread()
 					delete client;
 				}
 			}
-			else
+			else // other events (data receive / client disconnects)
 			{
-				for (Client* c : clients)
+				client_iterator it = clients.begin(); Client* c;
+
+				while (it != clients.end())
 				{
+					c = (*it);
+
 					if (selector.isReady(c->socket))
 					{
 						char buffer[PACKET_SIZE]; Packet p;
@@ -85,8 +99,18 @@ void Server::receiveThread()
 						if (c->socket.receive(buffer, PACKET_SIZE, received) == sf::Socket::Done)
 						{
 							p.decode(buffer);
-							callbackOnReceive(p);
+							callbackOnReceive(p, c);
+
+							++it;
 						}
+						else
+						{
+							killClient(it);
+						}
+					}
+					else
+					{
+						++it;
 					}
 				}
 			}
