@@ -19,7 +19,7 @@ public:
 	bool start(unsigned int port);
 	void stop();
 
-	void killClient(client_iterator& it);
+	void killClient(Client* c);
 
 private:
 	void receiveThread();

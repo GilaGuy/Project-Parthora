@@ -52,13 +52,11 @@ void Server::stop()
 	isRunning = false;
 }
 
-void Server::killClient(client_iterator& it)
+void Server::killClient(Client* c)
 {
-	Client* c = (*it);
-
 	selector.remove(c->socket);
 	c->socket.disconnect();
-	it = clients.erase(it);
+	clients.erase(std::remove(clients.begin(), clients.end(), c), clients.end());
 	delete c; c = nullptr;
 }
 
@@ -105,7 +103,8 @@ void Server::receiveThread()
 						}
 						else
 						{
-							killClient(it);
+							killClient(c);
+							++it;
 						}
 					}
 					else
