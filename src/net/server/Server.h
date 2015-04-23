@@ -13,13 +13,17 @@ class Server
 	typedef std::vector<Client*>::iterator client_iterator;
 
 public:
-	Server(std::function<void(Packet, Client*)> onReceive);
+	Server(std::function<void(Packet, Client*)> onReceive = nullptr);
 	~Server();
+
+	void setReceiveHandler(std::function<void(Packet, Client*)> onReceive);
 
 	bool start(unsigned int port);
 	void stop();
 
 	void killClient(Client* c);
+
+	bool isRunning();
 
 private:
 	void receiveThread();
@@ -30,7 +34,7 @@ private:
 	sf::Thread serverThread;
 	std::function<void(Packet, Client*)> callbackOnReceive;
 
-	bool isRunning;
+	bool is_running, thread_running;
 };
 
 #endif // SERVER_H

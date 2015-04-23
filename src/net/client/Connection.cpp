@@ -23,6 +23,11 @@ callbackOnReceive(onReceive)
 Connection::~Connection()
 {}
 
+void Connection::setReceiveHandler(std::function<void(Packet, sf::TcpSocket&)> onReceive)
+{
+	callbackOnReceive = onReceive;
+}
+
 bool Connection::start(std::string serverIP, unsigned int port)
 {
 	if (isConnected) return false;

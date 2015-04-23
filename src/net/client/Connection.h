@@ -8,8 +8,10 @@
 class Connection
 {
 public:
-	Connection(std::function<void(Packet, sf::TcpSocket&)> onReceive);
+	Connection(std::function<void(Packet, sf::TcpSocket&)> onReceive = nullptr);
 	~Connection();
+
+	void setReceiveHandler(std::function<void(Packet, sf::TcpSocket&)> onReceive);
 
 	bool start(std::string serverIP, unsigned int port);
 	void stop();

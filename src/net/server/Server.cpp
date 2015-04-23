@@ -17,7 +17,8 @@
 #include "../Protocol.h"
 
 Server::Server(std::function<void(Packet, Client*)> onReceive) :
-isRunning(false),
+is_running(false),
+thread_running(false),
 serverThread(&Server::receiveThread, this),
 callbackOnReceive(onReceive)
 {}
@@ -25,9 +26,14 @@ callbackOnReceive(onReceive)
 Server::~Server()
 {}
 
+void Server::setReceiveHandler(std::function<void(Packet, Client*)> onReceive)
+{
+	callbackOnReceive = onReceive;
+}
+
 bool Server::start(unsigned int port)
 {
-	if (isRunning) return false;
+	if (isRunning()) return false;
 
 	if (listener.listen(port) != sf::Socket::Done) return false;
 	selector.add(listener);
@@ -49,7 +55,7 @@ void Server::stop()
 
 	listener.close();
 
-	isRunning = false;
+	is_running = false;
 }
 
 void Server::killClient(Client* c)
@@ -60,11 +66,17 @@ void Server::killClient(Client* c)
 	delete c; c = nullptr;
 }
 
+bool Server::isRunning()
+{
+	return (is_running || thread_running);
+}
+
 void Server::receiveThread()
 {
-	isRunning = true;
+	is_running = true;
+	thread_running = true;
 
-	while (isRunning)
+	while (is_running)
 	{
 		if (selector.wait())
 		{
@@ -120,4 +132,6 @@ void Server::receiveThread()
 			break;
 		}
 	}
+
+	thread_running = false;
 }
