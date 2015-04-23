@@ -8,20 +8,22 @@
 class Connection
 {
 public:
-	Connection(std::function<void(Packet, sf::TcpSocket&)> onReceive = nullptr);
+	Connection(std::function<void(const Packet&, sf::TcpSocket&)> onReceive = nullptr);
 	~Connection();
 
-	void setReceiveHandler(std::function<void(Packet, sf::TcpSocket&)> onReceive);
+	void setReceiveHandler(std::function<void(const Packet&, sf::TcpSocket&)> onReceive);
 
 	bool start(std::string serverIP, unsigned int port);
 	void stop();
+
+	void send(const Packet& p);
 
 private:
 	void receiveThread();
 
 	sf::TcpSocket socket;
 	sf::Thread clientThread;
-	std::function<void(Packet, sf::TcpSocket&)> callbackOnReceive;
+	std::function<void(const Packet&, sf::TcpSocket&)> callbackOnReceive;
 
 	bool isConnected;
 };

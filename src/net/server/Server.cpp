@@ -16,7 +16,7 @@
 #include "Server.h"
 #include "../Protocol.h"
 
-Server::Server(std::function<void(Packet, Client*)> onReceive) :
+Server::Server(std::function<void(const Packet&, Client*)> onReceive) :
 is_running(false),
 thread_running(false),
 serverThread(&Server::receiveThread, this),
@@ -26,7 +26,7 @@ callbackOnReceive(onReceive)
 Server::~Server()
 {}
 
-void Server::setReceiveHandler(std::function<void(Packet, Client*)> onReceive)
+void Server::setReceiveHandler(std::function<void(const Packet&, Client*)> onReceive)
 {
 	callbackOnReceive = onReceive;
 }

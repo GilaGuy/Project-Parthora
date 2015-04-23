@@ -14,7 +14,7 @@
 
 #include "Connection.h"
 
-Connection::Connection(std::function<void(Packet, sf::TcpSocket&)> onReceive) :
+Connection::Connection(std::function<void(const Packet&, sf::TcpSocket&)> onReceive) :
 isConnected(false),
 clientThread(&Connection::receiveThread, this),
 callbackOnReceive(onReceive)
@@ -23,7 +23,7 @@ callbackOnReceive(onReceive)
 Connection::~Connection()
 {}
 
-void Connection::setReceiveHandler(std::function<void(Packet, sf::TcpSocket&)> onReceive)
+void Connection::setReceiveHandler(std::function<void(const Packet&, sf::TcpSocket&)> onReceive)
 {
 	callbackOnReceive = onReceive;
 }
