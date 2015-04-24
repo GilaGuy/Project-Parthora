@@ -122,9 +122,9 @@ void Server::receiveThread()
 						}
 						else
 						{
-							std::cout << "Client " << c << " disconnected!" << std::endl;
-
 							it_c = killClient(it_c);
+
+							std::cout << "Client " << c << " disconnected!" << std::endl;
 						}
 					}
 					else
