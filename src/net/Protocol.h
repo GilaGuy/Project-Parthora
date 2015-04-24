@@ -16,6 +16,7 @@
 #define PROTOCOL_H
 
 #include <SFML/Network.hpp>
+#include <SFML/Graphics.hpp>
 
 typedef unsigned int Screen;
 
@@ -24,15 +25,10 @@ enum MessageType
 	NONE, UPDATE_POS, UPDATE_INFO, CROSS_SCREENS
 };
 
-struct Color
-{
-	char r, g, b;
-};
-
 struct ParticleParams
 {
+	sf::Color colorBegin, colorEnd;
 	float x, y;
-	Color colorBegin, colorEnd;
 };
 
 struct DynamicClientParams
