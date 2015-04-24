@@ -44,6 +44,11 @@ void Connection::stop()
 	isConnected = false;
 }
 
+void Connection::send(const Packet& p)
+{
+	socket.send(p.encode().c_str(), PACKET_SIZE);
+}
+
 void Connection::receiveThread()
 {
 	isConnected = true;

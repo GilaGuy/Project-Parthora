@@ -16,6 +16,8 @@
 #include "Server.h"
 #include "../Protocol.h"
 
+#include <iostream>
+
 Server::Server(std::function<void(const Packet&, Client*)> onReceive) :
 is_running(false),
 thread_running(false),
@@ -58,12 +60,15 @@ void Server::stop()
 	is_running = false;
 }
 
-void Server::killClient(Client* c)
+Server::client_iterator Server::killClient(client_iterator it_c)
 {
+	Client* c = (*it_c);
+
 	selector.remove(c->socket);
 	c->socket.disconnect();
-	clients.erase(std::remove(clients.begin(), clients.end(), c), clients.end());
 	delete c; c = nullptr;
+
+	return clients.erase(it_c);
 }
 
 bool Server::isRunning()
@@ -87,6 +92,8 @@ void Server::receiveThread()
 				{
 					clients.push_back(client);
 					selector.add(client->socket);
+
+					std::cout << "Client " << client << " connected!" << std::endl;
 				}
 				else
 				{
@@ -95,11 +102,11 @@ void Server::receiveThread()
 			}
 			else // other events (data receive / client disconnects)
 			{
-				client_iterator it = clients.begin(); Client* c;
+				client_iterator it_c = clients.begin(); Client* c;
 
-				while (it != clients.end())
+				while (it_c != clients.end())
 				{
-					c = (*it);
+					c = (*it_c);
 
 					if (selector.isReady(c->socket))
 					{
@@ -111,17 +118,18 @@ void Server::receiveThread()
 							p.decode(buffer);
 							callbackOnReceive(p, c);
 
-							++it;
+							++it_c;
 						}
 						else
 						{
-							killClient(c);
-							++it;
+							std::cout << "Client " << c << " disconnected!" << std::endl;
+
+							it_c = killClient(it_c);
 						}
 					}
 					else
 					{
-						++it;
+						++it_c;
 					}
 				}
 			}

@@ -21,7 +21,7 @@ public:
 	bool start(unsigned int port);
 	void stop();
 
-	void killClient(Client* c);
+	client_iterator killClient(client_iterator it_c);
 
 	bool isRunning();
 

@@ -17,9 +17,6 @@
  */
 
 #include "Packet.h"
-#include <sstream>
-#include <string>
-#include <vector>
 
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
 	std::stringstream ss(s);
@@ -34,18 +31,6 @@ std::vector<std::string> split(const std::string &s, char delim) {
 	std::vector<std::string> elems;
 	split(s, delim, elems);
 	return elems;
-}
-
-template < class T >
-void Packet::add(T t)
-{
-	std::stringstream converter;
-	std::string data;
-
-	converter << t;
-	converter >> data;
-
-	mParams.push_back(data);
 }
 
 std::string Packet::encode() const
@@ -72,7 +57,7 @@ bool Packet::decode(std::string raw)
 
 	if (dataArray.empty()) return false;
 
-	mType = static_cast<MessageType>(std::stoi(dataArray.at(0)));
+	mType = static_cast<MessageType>(dataArray.at(0).at(0));
 	mParams = std::vector<std::string>(dataArray.begin() + 1, dataArray.end());
 
 	return true;

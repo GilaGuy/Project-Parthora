@@ -1,6 +1,9 @@
 #ifndef PACKET_H
 #define PACKET_H
 
+#include <sstream>
+#include <string>
+#include <vector>
 #include <SFML/Network.hpp>
 #include "Protocol.h"
 
@@ -10,7 +13,16 @@
 struct Packet
 {
 	template < class T >
-	void add(T t);
+	void add(T t)
+	{
+		std::stringstream converter;
+		std::string data;
+
+		converter << t;
+		converter >> data;
+
+		mParams.push_back(data);
+	}
 
 	std::string encode() const;
 	bool decode(std::string raw);
