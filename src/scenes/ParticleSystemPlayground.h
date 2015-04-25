@@ -25,7 +25,6 @@
 #include "../net/client/Connection.h"
 
 #include "../graphics/Fireball.h"
-#include "../graphics/LewisParticle.h"
 
 class ParticleSystemPlayground : public Scene
 {
