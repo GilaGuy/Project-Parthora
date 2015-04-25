@@ -18,10 +18,21 @@
 #include <SFML/Network.hpp>
 #include <SFML/Graphics.hpp>
 
+// ENUMS -----------------------------------------------------------------------
+
 enum MessageType
 {
-	NONE, UPDATE_POS, UPDATE_INFO, CROSS_SCREENS, REMOVE_TRACKING, CLIENT_DISCONNECTED
+	NO_MT, UPDATE_POS, UPDATE_INFO, CROSS_SCREENS, REMOVE_TRACKING, CLIENT_DISCONNECTED
 };
+
+enum CrossingDirection
+{
+	NO_CD, LEFT, RIGHT
+};
+
+//-----------------------------------------------------------------------------<
+
+// PARAMS ----------------------------------------------------------------------
 
 struct ParticleParams
 {
@@ -35,6 +46,10 @@ struct DynamicClientParams
 	ParticleParams pp;
 };
 
+//-----------------------------------------------------------------------------<
+
+// SCREEN ----------------------------------------------------------------------
+
 struct Client;
 
 struct Screen
@@ -44,6 +59,10 @@ struct Screen
 	ID id;
 	Client* owner;
 };
+
+//-----------------------------------------------------------------------------<
+
+// CLIENT ----------------------------------------------------------------------
 
 struct Client
 {
@@ -55,5 +74,7 @@ struct Client
 	std::vector<Screen*> externalScreenOccupancies;
 	DynamicClientParams params;
 };
+
+//-----------------------------------------------------------------------------<
 
 #endif // PROTOCOL_H
