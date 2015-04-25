@@ -1,5 +1,5 @@
 /**
- * Server driver.
+ * Project Parthora's server driver.
  *
  * @date       April 23, 2015
  *
