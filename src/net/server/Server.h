@@ -16,8 +16,9 @@ public:
 	Server();
 	~Server();
 
-	void setNewClientHandler(std::function<void(Client*)> onNewClient);
+	void setConnectHandler(std::function<void(Client*)> onConnect);
 	void setReceiveHandler(std::function<void(const Packet&, Client*)> onReceive);
+	void setDisconnectHandler(std::function<void(Client*)> onDisconnect);
 
 	bool start(unsigned int port);
 	void stop();
@@ -33,8 +34,9 @@ private:
 	sf::SocketSelector selector;
 	std::vector<Client*> clients;
 	sf::Thread serverThread;
-	std::function<void(Client*)> callbackOnNewClient;
+	std::function<void(Client*)> callbackOnConnect;
 	std::function<void(const Packet&, Client*)> callbackOnReceive;
+	std::function<void(Client*)> callbackOnDisconnect;
 
 	bool is_running, thread_running;
 };

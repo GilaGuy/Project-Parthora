@@ -22,21 +22,27 @@ Server::Server() :
 is_running(false),
 thread_running(false),
 serverThread(&Server::receiveThread, this),
-callbackOnNewClient(nullptr),
-callbackOnReceive(nullptr)
+callbackOnConnect(nullptr),
+callbackOnReceive(nullptr),
+callbackOnDisconnect(nullptr)
 {}
 
 Server::~Server()
 {}
 
-void Server::setNewClientHandler(std::function<void(Client*)> onNewClient)
+void Server::setConnectHandler(std::function<void(Client*)> onConnect)
 {
-	callbackOnNewClient = onNewClient;
+	callbackOnConnect = onConnect;
 }
 
 void Server::setReceiveHandler(std::function<void(const Packet&, Client*)> onReceive)
 {
 	callbackOnReceive = onReceive;
+}
+
+void Server::setDisconnectHandler(std::function<void(Client*)> onDisconnect)
+{
+	callbackOnDisconnect = onDisconnect;
 }
 
 bool Server::start(unsigned int port)
@@ -99,7 +105,7 @@ void Server::receiveThread()
 
 					std::cout << "Client " << client->socket.getRemoteAddress() << " [" << client << "]" << " connected!" << std::endl;
 
-					callbackOnNewClient(client);
+					callbackOnConnect(client);
 				}
 				else
 				{
@@ -129,6 +135,8 @@ void Server::receiveThread()
 						else
 						{
 							std::cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " disconnected!" << std::endl;
+
+							callbackOnDisconnect(c);
 
 							it_c = killClient(it_c);
 						}

@@ -21,9 +21,9 @@
 using namespace std;
 
 Screen ScreenID = 0;
-std::map<Screen, Client*> screens;
+std::map<Screen, Client*> screens; // contains the screens and its owners
 
-void onNewClient(Client* c)
+void onConnect(Client* c)
 {
 	screens[ScreenID++] = c;
 }
@@ -55,12 +55,18 @@ void onReceive(const Packet& p, Client* c)
 	}
 }
 
+void onDisconnect(Client* c)
+{
+
+}
+
 int main()
 {
 	Server server;
 
-	server.setNewClientHandler(onNewClient);
+	server.setConnectHandler(onConnect);
 	server.setReceiveHandler(onReceive);
+	server.setDisconnectHandler(onDisconnect);
 
 	server.start(12345);
 
