@@ -18,6 +18,11 @@
 
 #include <iostream>
 
+void Server::send(Packet p, Client* c)
+{
+	c->socket.send(p.encode().c_str(), PACKET_SIZE);
+}
+
 Server::Server() :
 is_running(false),
 thread_running(false),

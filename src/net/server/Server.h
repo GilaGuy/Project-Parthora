@@ -13,6 +13,8 @@ class Server
 	typedef std::vector<Client*>::iterator client_iterator;
 
 public:
+	static void send(Packet p, Client* c);
+
 	Server();
 	~Server();
 

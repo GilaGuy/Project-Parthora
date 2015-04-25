@@ -20,12 +20,16 @@
 
 using namespace std;
 
-Screen ScreenID = 0;
-std::map<Screen, Client*> screens; // contains the screens and its owners
+Client::ID clientID = 0;
+Screen::ID screenID = 0;
+
+std::vector<Screen> screens;
+typedef std::vector<Screen>::iterator screen_iterator;
 
 void onConnect(Client* c)
 {
-	screens[ScreenID++] = c;
+	c->id = ++clientID;
+	screens.push_back({ ++screenID, c });
 }
 
 void onReceive(const Packet& p, Client* c)
@@ -40,11 +44,11 @@ void onReceive(const Packet& p, Client* c)
 		c->params.pp.y = stoi(p.mParams.at(10));
 		break;
 
-	case MessageType::UPDATE_POS:
-		cout << "UPDATE POS" << endl;
+	case MessageType::CROSS_SCREENS:
 		break;
 
-	case MessageType::CROSS_SCREENS:
+	case MessageType::UPDATE_POS:
+		cout << "UPDATE POS" << endl;
 		break;
 
 	case MessageType::REMOVE_TRACKING:
@@ -57,7 +61,31 @@ void onReceive(const Packet& p, Client* c)
 
 void onDisconnect(Client* c)
 {
+	for (screen_iterator it = screens.begin(); it != screens.end();)
+	{
+		if (it->owner == c)
+		{
+			if (!c->externalScreenOccupancies.empty())
+			{
+				Packet p;
 
+				p.mType = MessageType::CLIENT_DISCONNECTED;
+				p.add(c->id);
+
+				for (Screen* s : c->externalScreenOccupancies)
+				{
+					Server::send(p, s->owner);
+				}
+			}
+
+			it = screens.erase(it);
+			return;
+		}
+		else
+		{
+			++it;
+		}
+	}
 }
 
 int main()
