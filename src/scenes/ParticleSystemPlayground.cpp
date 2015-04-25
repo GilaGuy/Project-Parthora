@@ -180,6 +180,7 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 
 void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 {
+	ps_1->emitterPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
 	ps_1->update(deltaTime);
 
 	view_main.move(view_main_offset);

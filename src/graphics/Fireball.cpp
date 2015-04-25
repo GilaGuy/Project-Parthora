@@ -56,9 +56,6 @@ Fireball::~Fireball()
 
 void Fireball::update(const sf::Time& deltaTime)
 {
-	lastEmitterPos = emitterPos;
-	emitterPos = window.getMousePositionRelativeToWindowAndView(view);
-
 	ParticleSystem::update(deltaTime);
 
 	sf::Vector2f delta(abs(emitterPos.x - lastEmitterPos.x), abs(emitterPos.y - lastEmitterPos.y));
@@ -88,12 +85,13 @@ void Fireball::update(const sf::Time& deltaTime)
 	swoosh.setVolume(swooshVolume);
 
 	++wavePhase;
-	waveAmp.x = magnitude / 5;
-	if (waveAmp.x > 15) waveAmp.x = 15;
-	waveAmp.y = waveAmp.x;
+	magnitude = std::min(magnitude / 5, 15.f);
+	waveAmp.x = waveAmp.y = magnitude;
 
 	shader_shake.setParameter("wave_phase", wavePhase);
 	shader_shake.setParameter("wave_amplitude", waveAmp);
+
+	lastEmitterPos = emitterPos;
 }
 
 void Fireball::updateParticle(const sf::Time &deltaTime, ParticleSystem::Particle &p)
