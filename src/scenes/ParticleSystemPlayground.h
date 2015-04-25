@@ -278,6 +278,8 @@ public:
 
 		sf::Listener::setPosition(view_main.getCenter().x, view_main.getCenter().y, -100);
 
+		updateNetworkParticles();
+
 		scene_log.text().setString(
 			"FPS: " + std::to_string(getWindow().getFPS())
 			+ "\n"
@@ -331,7 +333,12 @@ public:
 		p->colorEnd = sf::Color(rand() & 255, rand() & 255, rand() & 255);
 	}
 
-	void onReceive(Packet p, sf::TcpSocket& sock)
+	void onReceive(const Packet& p, sf::TcpSocket& socket)
+	{
+
+	}
+
+	void updateNetworkParticles()
 	{
 
 	}
