@@ -31,8 +31,7 @@ Scene(window, "Particle System Playground"), renderer(window, 1000)
 	ps_1_label.text().setCharacterSize(15);
 	ps_1_label.text().setString("ps_1");
 
-	ps_1 = new Fireball();
-
+	ps_1 = new Fireball(window, view_main);
 	ps_1->add(ps_1_label);
 
 	conn.setReceiveHandler(std::bind(&ParticleSystemPlayground::onReceive, this, std::placeholders::_1, std::placeholders::_2));
@@ -49,19 +48,9 @@ void ParticleSystemPlayground::onload()
 
 	view_hud = view_main = getWindow().getCurrentView();
 
-	shader_shake.loadFromFile("D:/Repositories/term-project/Source/Assets/shaders/wave.vert", sf::Shader::Vertex);
-	shader_shockwave.loadFromFile("D:/Repositories/term-project/Source/Assets/shaders/pound.vert", sf::Shader::Vertex);
-
 	music1.setPosition(view_main.getCenter().x, view_main.getCenter().y, 0);
 	music1.setMinDistance(1000);
 	music1.setLoop(true);
-
-	swooshStoppedLen = 0;
-	sb.loadFromFile("Data/audio/SWOOSH_loop.wav");
-	swoosh.setBuffer(sb);
-	swoosh.setLoop(true);
-	swoosh.setVolume(0);
-	swoosh.play();
 
 	ps_1_label.text().setPosition(10, -10);
 
@@ -95,7 +84,6 @@ void ParticleSystemPlayground::unload()
 {
 	getWindow().setMouseCursorVisible(true);
 
-	swoosh.stop();
 	music1.stop();
 
 	conn.stop();
@@ -192,56 +180,13 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 
 void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 {
-	static float wavePhase = 0;
-	static sf::Vector2f waveAmp;
-
-	lastEmitterPos = ps_1->emitterPos;
-	ps_1->emitterPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
-
 	ps_1->update(deltaTime);
-
-	sf::Vector2f delta(abs(ps_1->emitterPos.x - lastEmitterPos.x), abs(ps_1->emitterPos.y - lastEmitterPos.y));
-	float magnitude = sqrt(delta.x * delta.x + delta.y * delta.y);
-
-	if (magnitude > 5.0f)
-	{
-		swooshVolume += magnitude > 2.0f ? 2.0f : magnitude;
-		swooshStoppedLen = 0;
-	}
-	else
-	{
-		swooshVolume -= 2.0f;
-		swooshStoppedLen++;
-	}
-
-	swooshVolume = swooshVolume < 0.f ? 0.f : swooshVolume;
-	swooshVolume = swooshVolume > 100.f ? 100.f : swooshVolume;
-
-	if (swooshStoppedLen > 69)
-	{
-		swooshStoppedLen = 0;
-		wavePhase = 0;
-	}
-
-	swoosh.setPitch(swooshVolume / 100);
-	swoosh.setVolume(swooshVolume);
-
-	++wavePhase;
-	waveAmp.x = magnitude / 5;
-	if (waveAmp.x > 15) waveAmp.x = 15;
-	waveAmp.y = waveAmp.x;
-
-	shader_shake.setParameter("wave_phase", wavePhase);
-	shader_shake.setParameter("wave_amplitude", waveAmp);
-	shader_shockwave.setParameter("pound_position", ps_1->emitterPos);
-	shader_shockwave.setParameter("pound_total_radius", 5);
-	shader_shockwave.setParameter("pound_inner_radius", 3);
 
 	view_main.move(view_main_offset);
 
 	sf::Listener::setPosition(view_main.getCenter().x, view_main.getCenter().y, -100);
 
-	updateNetworkParticles();
+	updateNetworkedParticles();
 
 	scene_log.text().setString(
 		"FPS: " + std::to_string(getWindow().getFPS())
@@ -273,8 +218,6 @@ void ParticleSystemPlayground::render()
 
 	renderer.begin();
 
-	renderer.states.blendMode = sf::BlendAdd;
-	renderer.states.shader = &shader_shake;
 	renderer.draw(ps_1);
 
 	renderer.end();
@@ -301,7 +244,7 @@ void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 
 }
 
-void ParticleSystemPlayground::updateNetworkParticles()
+void ParticleSystemPlayground::updateNetworkedParticles()
 {
 
 }

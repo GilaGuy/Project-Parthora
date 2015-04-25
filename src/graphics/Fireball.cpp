@@ -13,8 +13,21 @@
 */
 
 #include "Fireball.h"
+#include "../engine/AppWindow.h"
+#include "../core/Renderer.h"
 
-Fireball::Fireball() : ParticleSystem(5000)
+#include <iostream>
+
+//TODO: make all the loadFromFile's done only once (make them also static variables).
+
+Fireball::Fireball(AppWindow& window, sf::View& view) : ParticleSystem(5000),
+window(window),
+view(view),
+lastEmitterPos(),
+swooshVolume(),
+swooshStoppedLen(),
+wavePhase(),
+waveAmp()
 {
 	lifeTimeMin = sf::seconds(0.f), lifeTimeMax = sf::seconds(2.f);
 	velMin = 3, velMax = 30, angleOffsetMin = -1.0f, angleOffsetMax = 1.0f;
@@ -26,10 +39,62 @@ Fireball::Fireball() : ParticleSystem(5000)
 	texture.loadFromFile("Data/textures/particle_1.tga");
 	texture.setSmooth(true);
 	setTexture(texture);
+
+	sb.loadFromFile("Data/audio/SWOOSH_loop.wav");
+	swoosh.setBuffer(sb);
+	swoosh.setLoop(true);
+	swoosh.setVolume(0);
+	swoosh.play();
+
+	shader_shake.loadFromFile("D:/Repositories/term-project/Source/Assets/shaders/wave.vert", sf::Shader::Vertex);
 }
 
 Fireball::~Fireball()
-{}
+{
+	swoosh.stop();
+}
+
+void Fireball::update(const sf::Time& deltaTime)
+{
+	lastEmitterPos = emitterPos;
+	emitterPos = window.getMousePositionRelativeToWindowAndView(view);
+
+	ParticleSystem::update(deltaTime);
+
+	sf::Vector2f delta(abs(emitterPos.x - lastEmitterPos.x), abs(emitterPos.y - lastEmitterPos.y));
+	float magnitude = sqrt(delta.x * delta.x + delta.y * delta.y);
+
+	if (magnitude > 5.0f)
+	{
+		swooshVolume += magnitude > 2.0f ? 2.0f : magnitude;
+		swooshStoppedLen = 0;
+	}
+	else
+	{
+		swooshVolume -= 2.0f;
+		swooshStoppedLen++;
+	}
+
+	swooshVolume = swooshVolume < 0.f ? 0.f : swooshVolume;
+	swooshVolume = swooshVolume > 100.f ? 100.f : swooshVolume;
+
+	if (swooshStoppedLen > 69)
+	{
+		swooshStoppedLen = 0;
+		wavePhase = 0;
+	}
+
+	swoosh.setPitch(swooshVolume / 100);
+	swoosh.setVolume(swooshVolume);
+
+	++wavePhase;
+	waveAmp.x = magnitude / 5;
+	if (waveAmp.x > 15) waveAmp.x = 15;
+	waveAmp.y = waveAmp.x;
+
+	shader_shake.setParameter("wave_phase", wavePhase);
+	shader_shake.setParameter("wave_amplitude", waveAmp);
+}
 
 void Fireball::updateParticle(const sf::Time &deltaTime, ParticleSystem::Particle &p)
 {
@@ -53,4 +118,12 @@ void Fireball::updateParticle(const sf::Time &deltaTime, ParticleSystem::Particl
 		p.pos.x += p.vel * cos(currcalc_theta_rad + p.angleOffset * currcalc_lifeTimeRatio);
 		p.pos.y += p.vel * sin(currcalc_theta_rad + p.angleOffset * currcalc_lifeTimeRatio);
 	}
+}
+
+void Fireball::draw(Renderer& renderer, sf::RenderStates states) const
+{
+	states.shader = &shader_shake;
+	states.blendMode = sf::BlendAdd;
+
+	ParticleSystem::draw(renderer, states);
 }

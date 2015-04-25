@@ -2,7 +2,6 @@
 #define PARTICLESYSTEMPLAYGROUND_H
 
 #include <SFML/Audio.hpp>
-
 #include "../core/Renderer.h"
 #include "../core/object/SGO.h"
 #include "../core/object/TGO.h"
@@ -26,14 +25,12 @@ public:
 
 	void onReceive(const Packet& p, sf::TcpSocket& socket);
 
-	void updateNetworkParticles();
+	void updateNetworkedParticles();
 
 private:
 	sf::View view_hud, view_main;
 
 	Renderer renderer;
-
-	sf::Shader shader_shake, shader_shockwave;
 
 	ParticleSystem* ps_1;
 	TGO ps_1_label;
@@ -41,14 +38,7 @@ private:
 	sf::Texture tex_1;
 	SGO thing_1, thing_2;
 
-	sf::Vector2f lastEmitterPos;
-
 	sf::Music music1;
-
-	sf::SoundBuffer sb;
-	sf::Sound swoosh;
-	float swooshVolume;
-	int swooshStoppedLen;
 
 	sf::Vector2f view_main_offset;
 
