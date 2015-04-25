@@ -18,15 +18,21 @@
 
 #include <iostream>
 
-Server::Server(std::function<void(const Packet&, Client*)> onReceive) :
+Server::Server() :
 is_running(false),
 thread_running(false),
 serverThread(&Server::receiveThread, this),
-callbackOnReceive(onReceive)
+callbackOnNewClient(nullptr),
+callbackOnReceive(nullptr)
 {}
 
 Server::~Server()
 {}
+
+void Server::setNewClientHandler(std::function<void(Client*)> onNewClient)
+{
+	callbackOnNewClient = onNewClient;
+}
 
 void Server::setReceiveHandler(std::function<void(const Packet&, Client*)> onReceive)
 {
@@ -46,18 +52,16 @@ bool Server::start(unsigned int port)
 
 void Server::stop()
 {
-	selector.clear();
-
-	for (Client* c : clients)
-	{
-		c->socket.disconnect();
-		delete c;
-	}
-	clients.clear();
+	is_running = false;
 
 	listener.close();
 
-	is_running = false;
+	if (thread_running) return;
+
+	selector.clear();
+	for (Client* c : clients) c->socket.disconnect();
+	for (Client* c : clients) delete c;
+	clients.clear();
 }
 
 Server::client_iterator Server::killClient(client_iterator it_c)
@@ -93,7 +97,9 @@ void Server::receiveThread()
 					clients.push_back(client);
 					selector.add(client->socket);
 
-					std::cout << "Client " << client << " connected!" << std::endl;
+					std::cout << "Client " << client->socket.getRemoteAddress() << " [" << client << "]" << " connected!" << std::endl;
+
+					callbackOnNewClient(client);
 				}
 				else
 				{
@@ -122,9 +128,9 @@ void Server::receiveThread()
 						}
 						else
 						{
-							it_c = killClient(it_c);
+							std::cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " disconnected!" << std::endl;
 
-							std::cout << "Client " << c << " disconnected!" << std::endl;
+							it_c = killClient(it_c);
 						}
 					}
 					else
@@ -134,12 +140,11 @@ void Server::receiveThread()
 				}
 			}
 		}
-		else
-		{
-			stop();
-			break;
-		}
 	}
 
 	thread_running = false;
+
+	stop();
+
+	std::cout << "Server thread stopped" << std::endl;
 }

@@ -18,11 +18,11 @@
 #include <SFML/Network.hpp>
 #include <SFML/Graphics.hpp>
 
-typedef unsigned int Screen;
+typedef sf::Uint16 Screen;
 
 enum MessageType
 {
-	NONE, UPDATE_POS, UPDATE_INFO, CROSS_SCREENS
+	NONE, UPDATE_POS, UPDATE_INFO, CROSS_SCREENS, REMOVE_TRACKING
 };
 
 struct ParticleParams
@@ -40,7 +40,7 @@ struct DynamicClientParams
 struct Client
 {
 	sf::TcpSocket socket;
-	Screen ownerScreen, currentScreen;
+	std::vector<Screen> screensOccupied;
 	DynamicClientParams params;
 };
 

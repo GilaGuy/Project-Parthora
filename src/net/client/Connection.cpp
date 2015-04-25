@@ -14,10 +14,10 @@
 
 #include "Connection.h"
 
-Connection::Connection(std::function<void(const Packet&, sf::TcpSocket&)> onReceive) :
+Connection::Connection() :
 isConnected(false),
 clientThread(&Connection::receiveThread, this),
-callbackOnReceive(onReceive)
+callbackOnReceive(nullptr)
 {}
 
 Connection::~Connection()

@@ -13,9 +13,10 @@ class Server
 	typedef std::vector<Client*>::iterator client_iterator;
 
 public:
-	Server(std::function<void(const Packet&, Client*)> onReceive = nullptr);
+	Server();
 	~Server();
 
+	void setNewClientHandler(std::function<void(Client*)> onNewClient);
 	void setReceiveHandler(std::function<void(const Packet&, Client*)> onReceive);
 
 	bool start(unsigned int port);
@@ -32,6 +33,7 @@ private:
 	sf::SocketSelector selector;
 	std::vector<Client*> clients;
 	sf::Thread serverThread;
+	std::function<void(Client*)> callbackOnNewClient;
 	std::function<void(const Packet&, Client*)> callbackOnReceive;
 
 	bool is_running, thread_running;

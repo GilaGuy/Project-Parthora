@@ -8,7 +8,7 @@
 class Connection
 {
 public:
-	Connection(std::function<void(const Packet&, sf::TcpSocket&)> onReceive = nullptr);
+	Connection();
 	~Connection();
 
 	void setReceiveHandler(std::function<void(const Packet&, sf::TcpSocket&)> onReceive);
