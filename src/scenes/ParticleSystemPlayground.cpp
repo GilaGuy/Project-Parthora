@@ -21,25 +21,22 @@
 ParticleSystemPlayground::ParticleSystemPlayground(AppWindow &window) :
 Scene(window, "Particle System Playground"), renderer(window, 1000)
 {
-	music1.openFromFile("D:/Dropbox/SFML-Game - backup/SFML-Game/Data/audio/gardenparty_mono.wav");
-
-	tex_1.loadFromFile("Data/textures/placeholder.png");
-	thing_1.sprite().setTexture(tex_1);
-	thing_1.middleAnchorPoint(true);
-
-	ps_1_label.text().setFont(*scene_log.text().getFont());
-	ps_1_label.text().setCharacterSize(15);
-	ps_1_label.text().setString("ps_1");
-
-	ps_1 = new Fireball(window, view_main);
-	ps_1->add(ps_1_label);
-
 	conn.setReceiveHandler(std::bind(&ParticleSystemPlayground::onReceive, this, std::placeholders::_1, std::placeholders::_2));
+
+	myPS_label.text().setFont(*scene_log.text().getFont());
+	myPS_label.text().setCharacterSize(15);
+	myPS_label.text().setString("MyPS");
+	myPS_label.text().setPosition(10, -10);
+
+	myPS = new Fireball(window, view_main);
+	myPS->add(myPS_label);
+
+	bgm.openFromFile("D:/Dropbox/SFML-Game - backup/SFML-Game/Data/audio/gardenparty_mono.wav");
 }
 
 ParticleSystemPlayground::~ParticleSystemPlayground()
 {
-	delete ps_1;
+	delete myPS;
 }
 
 void ParticleSystemPlayground::onload()
@@ -48,13 +45,10 @@ void ParticleSystemPlayground::onload()
 
 	view_hud = view_main = getWindow().getCurrentView();
 
-	music1.setPosition(view_main.getCenter().x, view_main.getCenter().y, 0);
-	music1.setMinDistance(1000);
-	music1.setLoop(true);
-
-	ps_1_label.text().setPosition(10, -10);
-
-	thing_1.sprite().setPosition(music1.getPosition().x, music1.getPosition().y);
+	bgm.setPosition(view_main.getCenter().x, view_main.getCenter().y, 0);
+	bgm.setMinDistance(1000);
+	bgm.setLoop(true);
+	bgm.play();
 
 	conn.start("localhost", 12345);
 
@@ -64,15 +58,15 @@ void ParticleSystemPlayground::onload()
 
 	p.add("Teguh");
 
-	p.add('0' + ps_1->colorBegin.r);
-	p.add('0' + ps_1->colorBegin.g);
-	p.add('0' + ps_1->colorBegin.b);
-	p.add('0' + ps_1->colorBegin.a);
+	p.add('0' + myPS->colorBegin.r);
+	p.add('0' + myPS->colorBegin.g);
+	p.add('0' + myPS->colorBegin.b);
+	p.add('0' + myPS->colorBegin.a);
 
-	p.add('0' + ps_1->colorEnd.r);
-	p.add('0' + ps_1->colorEnd.g);
-	p.add('0' + ps_1->colorEnd.b);
-	p.add('0' + ps_1->colorEnd.a);
+	p.add('0' + myPS->colorEnd.r);
+	p.add('0' + myPS->colorEnd.g);
+	p.add('0' + myPS->colorEnd.b);
+	p.add('0' + myPS->colorEnd.a);
 
 	p.add(0);
 	p.add(0);
@@ -84,7 +78,7 @@ void ParticleSystemPlayground::unload()
 {
 	getWindow().setMouseCursorVisible(true);
 
-	music1.stop();
+	bgm.stop();
 
 	conn.stop();
 }
@@ -93,7 +87,7 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 {
 	Scene::handleEvent(event);
 
-	static bool vSync = false, particleBuilder = false, music1Toggle = true;
+	static bool vSync = false, particleBuilder = false, music1Toggle = false;
 	static float view_main_offset_value = 5, view_main_offset_max = 15;
 
 	switch (event.type)
@@ -131,10 +125,10 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 			getWindow().removeScene(this->getID());
 			break;
 		case sf::Keyboard::Space:
-			randomizeParticleColors(ps_1);
+			randomizeParticleColors(myPS);
 			break;
 		case sf::Keyboard::Delete:
-			ps_1->clear();
+			myPS->clear();
 			break;
 
 		case sf::Keyboard::A:
@@ -151,20 +145,20 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 			break;
 		case sf::Keyboard::P:
 			particleBuilder = !particleBuilder;
-			ps_1->setBuilder(particleBuilder ? ParticleBuilders::pbPoint : ParticleBuilders::pbSprite);
+			myPS->setBuilder(particleBuilder ? ParticleBuilders::pbPoint : ParticleBuilders::pbSprite);
 			break;
 		case sf::Keyboard::M:
 			music1Toggle = !music1Toggle;
-			if (music1Toggle) music1.stop();
-			else music1.play();
+			if (music1Toggle) bgm.stop();
+			else bgm.play();
 			break;
 
 		case sf::Keyboard::Return:
 			// example:
 			Packet p;
 			p.mType = MessageType::UPDATE_POS;
-			p.add<float>(ps_1->emitterPos.x);
-			p.add<float>(ps_1->emitterPos.y);
+			p.add<float>(myPS->emitterPos.x);
+			p.add<float>(myPS->emitterPos.y);
 			conn.send(p);
 			break;
 		}
@@ -180,14 +174,14 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 
 void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 {
-	ps_1->emitterPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
-	ps_1->update(deltaTime);
+	myPS->emitterPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
+	myPS->update(deltaTime);
 
 	view_main.move(view_main_offset);
 
 	sf::Listener::setPosition(view_main.getCenter().x, view_main.getCenter().y, -100);
 
-	updateNetworkedParticles();
+	updateNetworkedParticleSystem();
 
 	scene_log.text().setString(
 		"FPS: " + std::to_string(getWindow().getFPS())
@@ -198,8 +192,8 @@ void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 		+ "\n"
 		+ "\nParticles>"
 		+ "\ntotal: " + std::to_string(ParticleSystem::TotalParticleCount)
-		+ "\n" + ps_1_label.text().getString() + " count   : " + std::to_string(ps_1->getParticleCount())
-		+ "\n" + ps_1_label.text().getString() + " vertices: " + std::to_string(ps_1->getVertexCount())
+		+ "\n" + myPS_label.text().getString() + " count   : " + std::to_string(myPS->getParticleCount())
+		+ "\n" + myPS_label.text().getString() + " vertices: " + std::to_string(myPS->getVertexCount())
 		);
 }
 
@@ -213,13 +207,7 @@ void ParticleSystemPlayground::render()
 
 	renderer.begin();
 
-	renderer.draw(thing_1);
-
-	renderer.end();
-
-	renderer.begin();
-
-	renderer.draw(ps_1);
+	renderer.draw(myPS);
 
 	renderer.end();
 
@@ -242,10 +230,24 @@ void ParticleSystemPlayground::randomizeParticleColors(ParticleSystem* p)
 
 void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 {
+	switch (p.mType)
+	{
+	case MessageType::CLIENT_DISCONNECTED:
+		for (NetworkedParticleSystem& nps : players)
+		{
+			if (nps.id == p.get<Client::ID>(0))
+			{
 
+			}
+		}
+		break;
+
+	case MessageType::CROSS_SCREENS:
+		break;
+	}
 }
 
-void ParticleSystemPlayground::updateNetworkedParticles()
+void ParticleSystemPlayground::updateNetworkedParticleSystem()
 {
 
 }

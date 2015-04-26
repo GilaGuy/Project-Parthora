@@ -9,6 +9,13 @@
 #include "../effect/ParticleSystem.h"
 #include "../net/client/Connection.h"
 
+struct NetworkedParticleSystem
+{
+	Client::ID id;
+	ParticleSystem* ps;
+	TGO label;
+};
+
 class ParticleSystemPlayground : public Scene
 {
 public:
@@ -25,24 +32,20 @@ public:
 
 	void onReceive(const Packet& p, sf::TcpSocket& socket);
 
-	void updateNetworkedParticles();
+	void updateNetworkedParticleSystem();
 
 private:
 	sf::View view_hud, view_main;
-
 	Renderer renderer;
-
-	ParticleSystem* ps_1;
-	TGO ps_1_label;
-
-	sf::Texture tex_1;
-	SGO thing_1, thing_2;
-
-	sf::Music music1;
-
-	sf::Vector2f view_main_offset;
-
 	Connection conn;
+
+	ParticleSystem* myPS;
+	TGO myPS_label;
+
+	std::vector<NetworkedParticleSystem> players;
+
+	sf::Music bgm;
+	sf::Vector2f view_main_offset;
 };
 
 #endif /* PARTICLESYSTEMPLAYGROUND_H */

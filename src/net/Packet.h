@@ -13,6 +13,23 @@
 struct Packet
 {
 	template < class T >
+	T get(size_t pos) const
+	{
+		std::stringstream converter;
+		T data;
+
+		converter << mParams.at(pos);
+		converter >> data;
+
+		return data;
+	}
+
+	inline std::string get(size_t pos) const
+	{
+		return mParams.at(pos);
+	}
+
+	template < class T >
 	void add(T t)
 	{
 		std::stringstream converter;

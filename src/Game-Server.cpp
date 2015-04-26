@@ -37,11 +37,11 @@ void onReceive(const Packet& p, Client* c)
 	switch (p.mType)
 	{
 	case MessageType::UPDATE_INFO:
-		c->params.name = p.mParams.at(0);
-		c->params.pp.colorBegin = sf::Color(stoi(p.mParams.at(1)), stoi(p.mParams.at(2)), stoi(p.mParams.at(3)), stoi(p.mParams.at(4)));
-		c->params.pp.colorEnd = sf::Color(stoi(p.mParams.at(5)), stoi(p.mParams.at(6)), stoi(p.mParams.at(7)), stoi(p.mParams.at(8)));
-		c->params.pp.x = stoi(p.mParams.at(9));
-		c->params.pp.y = stoi(p.mParams.at(10));
+		c->params.name = p.get(0);
+		c->params.pp.colorBegin = sf::Color(p.get<sf::Uint16>(1), p.get<sf::Uint16>(2), p.get<sf::Uint16>(3), p.get<sf::Uint16>(4));
+		c->params.pp.colorEnd = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
+		c->params.pp.x = p.get<float>(9);
+		c->params.pp.y = p.get<float>(10);
 		break;
 
 	case MessageType::CROSS_SCREENS:
