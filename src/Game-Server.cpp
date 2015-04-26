@@ -45,6 +45,7 @@ void onReceive(const Packet& p, Client* c)
 		break;
 
 	case MessageType::CROSS_SCREENS:
+
 		break;
 
 	case MessageType::UPDATE_POS:

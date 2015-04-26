@@ -14,9 +14,10 @@
 
 #include "ParticleSystemPlayground.h"
 
-#include <iostream>
 #include "../engine/AppWindow.h"
 #include "../graphics/Fireball.h"
+
+#include <iostream>
 
 ParticleSystemPlayground::ParticleSystemPlayground(AppWindow &window) :
 Scene(window, "Particle System Playground"), renderer(window, 1000)
@@ -233,16 +234,18 @@ void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 	switch (p.mType)
 	{
 	case MessageType::CLIENT_DISCONNECTED:
-		for (NetworkedParticleSystem& nps : players)
+		for (std::vector<NetworkedParticleSystem>::iterator it = players.begin(); it != players.end();)
 		{
-			if (nps.id == p.get<Client::ID>(0))
+			if (it->id == p.get<Client::ID>(0))
 			{
-
+				it = players.erase(it);
+				return;
 			}
 		}
 		break;
 
 	case MessageType::CROSS_SCREENS:
+
 		break;
 	}
 }
