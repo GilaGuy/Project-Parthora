@@ -41,6 +41,11 @@ struct Packet
 		mParams.push_back(data);
 	}
 
+	inline void add(std::string str)
+	{
+		mParams.push_back(str);
+	}
+
 	std::string encode() const;
 	bool decode(std::string raw);
 

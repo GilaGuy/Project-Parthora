@@ -37,7 +37,7 @@ std::string Packet::encode() const
 {
 	std::string data;
 
-	data += (int)mType;
+	data += static_cast<int>(mType);
 	data += PACKET_SEP;
 
 	for (std::string p : mParams)
@@ -57,7 +57,7 @@ bool Packet::decode(std::string raw)
 
 	if (dataArray.empty()) return false;
 
-	mType = static_cast<MessageType>(dataArray.at(0).at(0));
+	mType = static_cast<MessageType>(dataArray.front().front());
 	mParams = std::vector<std::string>(dataArray.begin() + 1, dataArray.end());
 
 	return true;

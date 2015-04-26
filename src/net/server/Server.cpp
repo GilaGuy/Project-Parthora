@@ -108,8 +108,6 @@ void Server::receiveThread()
 					clients.push_back(client);
 					selector.add(client->socket);
 
-					std::cout << "Client " << client->socket.getRemoteAddress() << " [" << client << "]" << " connected!" << std::endl;
-
 					callbackOnConnect(client);
 				}
 				else
@@ -139,8 +137,6 @@ void Server::receiveThread()
 						}
 						else
 						{
-							std::cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " disconnected!" << std::endl;
-
 							callbackOnDisconnect(c);
 
 							it_c = killClient(it_c);
@@ -155,9 +151,9 @@ void Server::receiveThread()
 		}
 	}
 
+	std::cout << "Server receive thread stopped!" << std::endl;
+
 	thread_running = false;
 
 	stop();
-
-	std::cout << "Server thread stopped" << std::endl;
 }

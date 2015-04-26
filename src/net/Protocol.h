@@ -70,6 +70,8 @@ struct Client
 
 	typedef sf::Uint16 ID;
 
+	static const ID ID_MYSELF = 0;
+
 	ID id;
 	std::vector<Screen*> externalScreenOccupancies;
 	DynamicClientParams params;

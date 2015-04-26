@@ -15,6 +15,7 @@
 
 #include <map>
 #include "net\server\Server.h"
+#include "net\Protocol.h"
 
 #include <iostream>
 
@@ -26,8 +27,23 @@ Screen::ID screenID = 0;
 std::vector<Screen> screens;
 typedef std::vector<Screen>::iterator screen_iterator;
 
+int getScreen(Client::ID ownerID)
+{
+	for (int s = 0; s < screens.size(); ++s)
+	{
+		if (screens[s].owner->id == ownerID)
+		{
+			return s;
+		}
+	}
+
+	return -1;
+}
+
 void onConnect(Client* c)
 {
+	std::cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " connected!" << std::endl;
+
 	c->id = ++clientID;
 	screens.push_back({ ++screenID, c });
 }
@@ -45,8 +61,21 @@ void onReceive(const Packet& p, Client* c)
 		break;
 
 	case MessageType::CROSS_SCREENS:
+	{
+		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(0));
+		Client::ID clientID = p.get<Client::ID>(1); // the client that's crossing screens
+		int targetScreen = clientID == 0 ? getScreen(c->id) : getScreen(clientID);
 
-		break;
+		if (targetScreen == -1) return;
+
+		if (crossDir == LEFT) targetScreen = --targetScreen;
+		else if (crossDir == RIGHT) targetScreen = ++targetScreen;
+
+		if (targetScreen < 0 || targetScreen == screens.size()) return;
+
+		// send the cross_screens msg to the owner of the target screen
+	}
+	break;
 
 	case MessageType::UPDATE_POS:
 		cout << "UPDATE POS" << endl;
@@ -62,6 +91,8 @@ void onReceive(const Packet& p, Client* c)
 
 void onDisconnect(Client* c)
 {
+	std::cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " disconnected!" << std::endl;
+
 	for (screen_iterator it = screens.begin(); it != screens.end();)
 	{
 		if (it->owner == c)

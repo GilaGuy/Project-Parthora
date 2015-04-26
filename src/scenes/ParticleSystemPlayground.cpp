@@ -73,6 +73,12 @@ void ParticleSystemPlayground::onload()
 	p.add(0);
 
 	conn.send(p);
+
+	players.emplace_back(NetworkedParticleSystem());
+	players.front().id = Client::ID_MYSELF;
+	players.front().ps = myPS;
+	players.front().label = &myPS_label;
+	players.front().crossed = false;
 }
 
 void ParticleSystemPlayground::unload()
@@ -80,6 +86,8 @@ void ParticleSystemPlayground::unload()
 	getWindow().setMouseCursorVisible(true);
 
 	bgm.stop();
+
+	players.clear();
 
 	conn.stop();
 }
@@ -245,12 +253,49 @@ void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 		break;
 
 	case MessageType::CROSS_SCREENS:
-
+		// create new NPS
+		// sample below
+		players.emplace_back(NetworkedParticleSystem());
+		players.front().id = 666;
+		players.front().ps = NULL;
+		players.front().label = NULL;
+		players.front().crossed = false;
 		break;
 	}
 }
 
 void ParticleSystemPlayground::updateNetworkedParticleSystem()
 {
+	float screenPaddingX = getWindow().getSize().x * 0.125;
+	float boundaryLeft = screenPaddingX, boundaryRight = getWindow().getSize().x - screenPaddingX;
 
+	Packet p;
+	p.mType = MessageType::CROSS_SCREENS;
+
+	for (NetworkedParticleSystem& nps : players)
+	{
+		if (!nps.crossed)
+		{
+			if (nps.ps->emitterPos.x < boundaryLeft)
+			{
+				p.mParams.clear();
+				p.add((int)CrossingDirection::LEFT);
+				p.add(nps.id);
+
+				conn.send(p);
+
+				nps.crossed = true;
+			}
+			else if (nps.ps->emitterPos.x > boundaryRight)
+			{
+				p.mParams.clear();
+				p.add((int)CrossingDirection::RIGHT);
+				p.add(nps.id);
+
+				conn.send(p);
+
+				nps.crossed = true;
+			}
+		}
+	}
 }

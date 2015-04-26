@@ -13,7 +13,8 @@ struct NetworkedParticleSystem
 {
 	Client::ID id;
 	ParticleSystem* ps;
-	TGO label;
+	TGO* label;
+	bool crossed;
 };
 
 class ParticleSystemPlayground : public Scene
