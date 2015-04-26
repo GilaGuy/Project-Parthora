@@ -23,6 +23,12 @@ TGO::TGO()
 {}
 
 /**
+* Constructor.
+*/
+TGO::TGO(const sf::String& string, const sf::Font& font, unsigned int characterSize) : data(string, font, characterSize)
+{}
+
+/**
  * Destructor.
  */
 TGO::~TGO()

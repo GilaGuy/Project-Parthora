@@ -9,6 +9,7 @@ class TGO : public BGO
 {
 public:
 	TGO();
+	TGO(const sf::String& string, const sf::Font& font, unsigned int characterSize = 30);
 
 	virtual ~TGO();
 

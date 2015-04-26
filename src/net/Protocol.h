@@ -20,9 +20,11 @@
 
 // ENUMS -----------------------------------------------------------------------
 
+// Listed in chronological order of a simple scenario in which
+// a particle from one screen is created, then crosses to another then disconnecting.
 enum MessageType
 {
-	NO_MT, UPDATE_POS, UPDATE_INFO, CROSS_SCREENS, REMOVE_TRACKING, CLIENT_DISCONNECTED
+	NO_MT, CLIENT_INFO, CROSS_SCREENS, CLIENT_NEW, UPDATE_POS, REMOVE_TRACKING, CLIENT_DISCONNECTED
 };
 
 enum CrossingDirection
@@ -37,12 +39,12 @@ enum CrossingDirection
 struct ParticleParams
 {
 	sf::Color colorBegin, colorEnd;
-	float x, y;
 };
 
 struct DynamicClientParams
 {
 	std::string name;
+	float x, y;
 	ParticleParams pp;
 };
 

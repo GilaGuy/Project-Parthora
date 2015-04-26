@@ -20,25 +20,15 @@
 #include <iostream>
 
 ParticleSystemPlayground::ParticleSystemPlayground(AppWindow &window) :
-Scene(window, "Particle System Playground"), renderer(window, 1000)
+Scene(window, "Particle System Playground"), renderer(window, 1000), myNPS(nullptr)
 {
 	conn.setReceiveHandler(std::bind(&ParticleSystemPlayground::onReceive, this, std::placeholders::_1, std::placeholders::_2));
-
-	myPS_label.text().setFont(*scene_log.text().getFont());
-	myPS_label.text().setCharacterSize(15);
-	myPS_label.text().setString("MyPS");
-	myPS_label.text().setPosition(10, -10);
-
-	myPS = new Fireball(window, view_main);
-	myPS->add(myPS_label);
 
 	bgm.openFromFile("D:/Dropbox/SFML-Game - backup/SFML-Game/Data/audio/gardenparty_mono.wav");
 }
 
 ParticleSystemPlayground::~ParticleSystemPlayground()
-{
-	delete myPS;
-}
+{}
 
 void ParticleSystemPlayground::onload()
 {
@@ -54,31 +44,9 @@ void ParticleSystemPlayground::onload()
 	conn.start("localhost", 12345);
 
 	Packet p;
-
-	p.mType = MessageType::UPDATE_INFO;
-
-	p.add("Teguh");
-
-	p.add('0' + myPS->colorBegin.r);
-	p.add('0' + myPS->colorBegin.g);
-	p.add('0' + myPS->colorBegin.b);
-	p.add('0' + myPS->colorBegin.a);
-
-	p.add('0' + myPS->colorEnd.r);
-	p.add('0' + myPS->colorEnd.g);
-	p.add('0' + myPS->colorEnd.b);
-	p.add('0' + myPS->colorEnd.a);
-
-	p.add(0);
-	p.add(0);
+	createClientInfoPacket(createNPS(Client::ID_MYSELF, "Teguh"), p);
 
 	conn.send(p);
-
-	players.emplace_back(NetworkedParticleSystem());
-	players.front().id = Client::ID_MYSELF;
-	players.front().ps = myPS;
-	players.front().label = &myPS_label;
-	players.front().crossed = false;
 }
 
 void ParticleSystemPlayground::unload()
@@ -97,78 +65,80 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 	Scene::handleEvent(event);
 
 	static bool vSync = false, particleBuilder = false, music1Toggle = false;
-	static float view_main_offset_value = 5, view_main_offset_max = 15;
+	//static float view_main_offset_value = 5, view_main_offset_max = 15;
 
 	switch (event.type)
 	{
+	case sf::Event::MouseMoved:
+		myNPS->ps->emitterPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
+		break;
+
 	case sf::Event::MouseWheelMoved:
 		view_main.zoom(1 - event.mouseWheel.delta * 0.0625f);
 		break;
 
-	case sf::Event::KeyPressed:
+		/*
+		case sf::Event::KeyPressed:
 		switch (event.key.code)
 		{
 		case sf::Keyboard::A:
-			if (view_main_offset.x > -view_main_offset_max)
-				view_main_offset.x += -view_main_offset_value;
-			break;
+		if (view_main_offset.x > -view_main_offset_max)
+		view_main_offset.x += -view_main_offset_value;
+		break;
 		case sf::Keyboard::D:
-			if (view_main_offset.x < view_main_offset_max)
-				view_main_offset.x += view_main_offset_value;
-			break;
+		if (view_main_offset.x < view_main_offset_max)
+		view_main_offset.x += view_main_offset_value;
+		break;
 		case sf::Keyboard::W:
-			if (view_main_offset.y > -view_main_offset_max)
-				view_main_offset.y += -view_main_offset_value;
-			break;
+		if (view_main_offset.y > -view_main_offset_max)
+		view_main_offset.y += -view_main_offset_value;
+		break;
 		case sf::Keyboard::S:
-			if (view_main_offset.y < view_main_offset_max)
-				view_main_offset.y += view_main_offset_value;
-			break;
+		if (view_main_offset.y < view_main_offset_max)
+		view_main_offset.y += view_main_offset_value;
+		break;
 		}
 		break;
+		*/
 
 	case sf::Event::KeyReleased:
 		switch (event.key.code)
 		{
 		case sf::Keyboard::BackSpace:
-			getWindow().removeScene(this->getID());
+			//getWindow().removeScene(this->getID());
 			break;
 		case sf::Keyboard::Space:
-			randomizeParticleColors(myPS);
+			//randomizeParticleColors(myNPS->ps);
 			break;
 		case sf::Keyboard::Delete:
-			myPS->clear();
+			for (NetworkedParticleSystem& nps : players)
+			{
+				nps.ps->clear();
+			}
 			break;
 
-		case sf::Keyboard::A:
-		case sf::Keyboard::D:
+			/*
+			case sf::Keyboard::A:
+			case sf::Keyboard::D:
 			view_main_offset.x = 0;
 			break;
-		case sf::Keyboard::W:
-		case sf::Keyboard::S:
+			case sf::Keyboard::W:
+			case sf::Keyboard::S:
 			view_main_offset.y = 0;
 			break;
+			*/
 
 		case sf::Keyboard::V:
 			getWindow().setVerticalSyncEnabled(vSync = !vSync);
 			break;
 		case sf::Keyboard::P:
 			particleBuilder = !particleBuilder;
-			myPS->setBuilder(particleBuilder ? ParticleBuilders::pbPoint : ParticleBuilders::pbSprite);
+			myNPS->ps->setBuilder(particleBuilder ? ParticleBuilders::pbPoint : ParticleBuilders::pbSprite);
 			break;
 		case sf::Keyboard::M:
 			music1Toggle = !music1Toggle;
 			if (music1Toggle) bgm.stop();
 			else bgm.play();
-			break;
-
-		case sf::Keyboard::Return:
-			// example:
-			Packet p;
-			p.mType = MessageType::UPDATE_POS;
-			p.add<float>(myPS->emitterPos.x);
-			p.add<float>(myPS->emitterPos.y);
-			conn.send(p);
 			break;
 		}
 		break;
@@ -183,10 +153,12 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 
 void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 {
-	myPS->emitterPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
-	myPS->update(deltaTime);
+	for (NetworkedParticleSystem& nps : players)
+	{
+		nps.ps->update(deltaTime);
+	}
 
-	view_main.move(view_main_offset);
+	//view_main.move(view_main_offset);
 
 	sf::Listener::setPosition(view_main.getCenter().x, view_main.getCenter().y, -100);
 
@@ -201,8 +173,8 @@ void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 		+ "\n"
 		+ "\nParticles>"
 		+ "\ntotal: " + std::to_string(ParticleSystem::TotalParticleCount)
-		+ "\n" + myPS_label.text().getString() + " count   : " + std::to_string(myPS->getParticleCount())
-		+ "\n" + myPS_label.text().getString() + " vertices: " + std::to_string(myPS->getVertexCount())
+		+ "\n" + myNPS->label.text().getString() + " count   : " + std::to_string(myNPS->ps->getParticleCount())
+		+ "\n" + myNPS->label.text().getString() + " vertices: " + std::to_string(myNPS->ps->getVertexCount())
 		);
 }
 
@@ -216,7 +188,7 @@ void ParticleSystemPlayground::render()
 
 	renderer.begin();
 
-	renderer.draw(myPS);
+	renderer.draw(myNPS->ps);
 
 	renderer.end();
 
@@ -241,6 +213,11 @@ void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 {
 	switch (p.mType)
 	{
+	case MessageType::CLIENT_NEW:
+		NetworkedParticleSystem& npsNew = createNPS(p.get<Client::ID>(0), p.get(1));
+		// TODO: finish the creation...
+		break;
+
 	case MessageType::CLIENT_DISCONNECTED:
 		for (std::vector<NetworkedParticleSystem>::iterator it = players.begin(); it != players.end();)
 		{
@@ -251,16 +228,6 @@ void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 			}
 		}
 		break;
-
-	case MessageType::CROSS_SCREENS:
-		// create new NPS
-		// sample below
-		players.emplace_back(NetworkedParticleSystem());
-		players.front().id = 666;
-		players.front().ps = NULL;
-		players.front().label = NULL;
-		players.front().crossed = false;
-		break;
 	}
 }
 
@@ -268,6 +235,7 @@ void ParticleSystemPlayground::updateNetworkedParticleSystem()
 {
 	float screenPaddingX = getWindow().getSize().x * 0.125;
 	float boundaryLeft = screenPaddingX, boundaryRight = getWindow().getSize().x - screenPaddingX;
+	CrossingDirection crossDir = NO_CD;
 
 	Packet p;
 	p.mType = MessageType::CROSS_SCREENS;
@@ -278,19 +246,23 @@ void ParticleSystemPlayground::updateNetworkedParticleSystem()
 		{
 			if (nps.ps->emitterPos.x < boundaryLeft)
 			{
-				p.mParams.clear();
-				p.add((int)CrossingDirection::LEFT);
-				p.add(nps.id);
-
-				conn.send(p);
-
-				nps.crossed = true;
+				crossDir = LEFT;
 			}
 			else if (nps.ps->emitterPos.x > boundaryRight)
 			{
+				crossDir = RIGHT;
+			}
+			else
+			{
+				crossDir = NO_CD;
+			}
+
+			if (crossDir != NO_CD)
+			{
 				p.mParams.clear();
-				p.add((int)CrossingDirection::RIGHT);
+				p.add((int)crossDir);
 				p.add(nps.id);
+				p.add(nps.ps->emitterPos.y / getWindow().getSize().y);
 
 				conn.send(p);
 
@@ -298,4 +270,43 @@ void ParticleSystemPlayground::updateNetworkedParticleSystem()
 			}
 		}
 	}
+}
+
+void ParticleSystemPlayground::createClientInfoPacket(const NetworkedParticleSystem& nps, Packet& p)
+{
+	p.mType = MessageType::CLIENT_INFO;
+
+	p.mParams.clear();
+
+	p.add(nps.id);
+
+	p.add('0' + nps.ps->colorBegin.r);
+	p.add('0' + nps.ps->colorBegin.g);
+	p.add('0' + nps.ps->colorBegin.b);
+	p.add('0' + nps.ps->colorBegin.a);
+
+	p.add('0' + nps.ps->colorEnd.r);
+	p.add('0' + nps.ps->colorEnd.g);
+	p.add('0' + nps.ps->colorEnd.b);
+	p.add('0' + nps.ps->colorEnd.a);
+}
+
+NetworkedParticleSystem& ParticleSystemPlayground::createNPS(Client::ID id, std::string name)
+{
+	players.emplace_back
+		(
+		id, new Fireball(getWindow(), view_main), (name, *scene_log.text().getFont(), 15), false
+		);
+
+	NetworkedParticleSystem& nps = players.back();
+
+	nps.label.text().setPosition(10, -10);
+	nps.ps->add(nps.label);
+
+	if (id == Client::ID_MYSELF)
+	{
+		myNPS = &nps;
+	}
+
+	return nps;
 }

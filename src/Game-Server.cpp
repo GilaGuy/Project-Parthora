@@ -52,12 +52,10 @@ void onReceive(const Packet& p, Client* c)
 {
 	switch (p.mType)
 	{
-	case MessageType::UPDATE_INFO:
+	case MessageType::CLIENT_INFO:
 		c->params.name = p.get(0);
 		c->params.pp.colorBegin = sf::Color(p.get<sf::Uint16>(1), p.get<sf::Uint16>(2), p.get<sf::Uint16>(3), p.get<sf::Uint16>(4));
 		c->params.pp.colorEnd = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
-		c->params.pp.x = p.get<float>(9);
-		c->params.pp.y = p.get<float>(10);
 		break;
 
 	case MessageType::CROSS_SCREENS:
@@ -73,7 +71,9 @@ void onReceive(const Packet& p, Client* c)
 
 		if (targetScreen < 0 || targetScreen == screens.size()) return;
 
-		// send the cross_screens msg to the owner of the target screen
+		// send a CLIENT_INFO msg to the owner of the target screen
+
+		Packet p;
 	}
 	break;
 

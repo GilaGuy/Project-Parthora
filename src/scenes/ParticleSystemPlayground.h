@@ -13,7 +13,7 @@ struct NetworkedParticleSystem
 {
 	Client::ID id;
 	ParticleSystem* ps;
-	TGO* label;
+	TGO label;
 	bool crossed;
 };
 
@@ -35,18 +35,19 @@ public:
 
 	void updateNetworkedParticleSystem();
 
+	void createClientInfoPacket(const NetworkedParticleSystem& nps, Packet& p);
+
+	NetworkedParticleSystem& createNPS(Client::ID id, std::string name);
+
 private:
 	sf::View view_hud, view_main;
 	Renderer renderer;
 	Connection conn;
 
-	ParticleSystem* myPS;
-	TGO myPS_label;
-
+	NetworkedParticleSystem* myNPS;
 	std::vector<NetworkedParticleSystem> players;
 
 	sf::Music bgm;
-	sf::Vector2f view_main_offset;
 };
 
 #endif /* PARTICLESYSTEMPLAYGROUND_H */
