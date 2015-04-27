@@ -9,7 +9,7 @@
 #include "../effect/ParticleSystem.h"
 #include "../net/client/Connection.h"
 
-struct NetworkedParticleSystem
+struct Player
 {
 	Client::ID id;
 	ParticleSystem* ps;
@@ -29,23 +29,22 @@ public:
 	void update(const sf::Time &deltaTime) override;
 	void render() override;
 
-	void randomizeParticleColors(ParticleSystem* p);
+	void randomizeParticleColors(ParticleSystem* ps);
 
 	void onReceive(const Packet& p, sf::TcpSocket& socket);
 
-	void updateNetworkedParticleSystem();
+	void createClientInfoPacket(const Player& player, Packet& p);
+	Player& createPlayer(Client::ID id, std::string name);
 
-	void createClientInfoPacket(const NetworkedParticleSystem& nps, Packet& p);
-
-	NetworkedParticleSystem& createNPS(Client::ID id, std::string name);
+	void updatePlayers();
 
 private:
 	sf::View view_hud, view_main;
 	Renderer renderer;
 	Connection conn;
 
-	NetworkedParticleSystem* myNPS;
-	std::vector<NetworkedParticleSystem> players;
+	Player* me;
+	std::vector<Player> players;
 
 	sf::Music bgm;
 };
