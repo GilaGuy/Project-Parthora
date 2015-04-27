@@ -27,7 +27,7 @@ Screen::ID screenID = 0;
 std::vector<Screen> screens;
 typedef std::vector<Screen>::iterator screen_iterator;
 
-int getScreen(Client::ID ownerID)
+int getScreenIdx(Client::ID ownerID)
 {
 	for (int s = 0; s < screens.size(); ++s)
 	{
@@ -42,9 +42,10 @@ int getScreen(Client::ID ownerID)
 
 void onConnect(Client* c)
 {
-	std::cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " connected!" << std::endl;
+	cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " connected!" << endl;
 
 	c->id = ++clientID;
+	c->screenIdx = screens.size();
 	screens.push_back({ ++screenID, c });
 }
 
@@ -62,7 +63,7 @@ void onReceive(const Packet& p, Client* c)
 	{
 		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(0));
 		Client::ID clientID = p.get<Client::ID>(1); // the client that's crossing screens
-		int targetScreen = clientID == 0 ? getScreen(c->id) : getScreen(clientID);
+		int targetScreen = clientID == Client::ID_MYSELF ? c->screenIdx : getScreenIdx(clientID);
 
 		if (targetScreen == -1) return;
 
@@ -91,7 +92,7 @@ void onReceive(const Packet& p, Client* c)
 
 void onDisconnect(Client* c)
 {
-	std::cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " disconnected!" << std::endl;
+	cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " disconnected!" << endl;
 
 	for (screen_iterator it = screens.begin(); it != screens.end();)
 	{

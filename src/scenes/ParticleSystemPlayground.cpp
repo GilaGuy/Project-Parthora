@@ -19,6 +19,8 @@
 
 #include <iostream>
 
+using namespace std;
+
 ParticleSystemPlayground::ParticleSystemPlayground(AppWindow &window) :
 Scene(window, "Particle System Playground"), renderer(window, 1000), myNPS(nullptr)
 {
@@ -28,13 +30,15 @@ Scene(window, "Particle System Playground"), renderer(window, 1000), myNPS(nullp
 }
 
 ParticleSystemPlayground::~ParticleSystemPlayground()
-{}
+{
+	unload();
+}
 
 void ParticleSystemPlayground::onload()
 {
-	getWindow().setMouseCursorVisible(false);
-
 	view_hud = view_main = getWindow().getCurrentView();
+
+	getWindow().setMouseCursorVisible(false);
 
 	bgm.setPosition(view_main.getCenter().x, view_main.getCenter().y, 0);
 	bgm.setMinDistance(1000);
@@ -55,6 +59,10 @@ void ParticleSystemPlayground::unload()
 
 	bgm.stop();
 
+	for (NetworkedParticleSystem& nps : players)
+	{
+		delete nps.ps;
+	}
 	players.clear();
 
 	conn.stop();
@@ -70,7 +78,7 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 	switch (event.type)
 	{
 	case sf::Event::MouseMoved:
-		myNPS->ps->emitterPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
+		if (myNPS != nullptr) myNPS->ps->emitterPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
 		break;
 
 	case sf::Event::MouseWheelMoved:
@@ -133,7 +141,7 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 			break;
 		case sf::Keyboard::P:
 			particleBuilder = !particleBuilder;
-			myNPS->ps->setBuilder(particleBuilder ? ParticleBuilders::pbPoint : ParticleBuilders::pbSprite);
+			if (myNPS != nullptr) myNPS->ps->setBuilder(particleBuilder ? ParticleBuilders::pbPoint : ParticleBuilders::pbSprite);
 			break;
 		case sf::Keyboard::M:
 			music1Toggle = !music1Toggle;
@@ -173,8 +181,6 @@ void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 		+ "\n"
 		+ "\nParticles>"
 		+ "\ntotal: " + std::to_string(ParticleSystem::TotalParticleCount)
-		+ "\n" + myNPS->label.text().getString() + " count   : " + std::to_string(myNPS->ps->getParticleCount())
-		+ "\n" + myNPS->label.text().getString() + " vertices: " + std::to_string(myNPS->ps->getVertexCount())
 		);
 }
 
@@ -188,7 +194,10 @@ void ParticleSystemPlayground::render()
 
 	renderer.begin();
 
-	renderer.draw(myNPS->ps);
+	for (NetworkedParticleSystem& nps : players)
+	{
+		renderer.draw(nps.ps);
+	}
 
 	renderer.end();
 
@@ -214,15 +223,19 @@ void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 	switch (p.mType)
 	{
 	case MessageType::CLIENT_NEW:
+	{
 		NetworkedParticleSystem& npsNew = createNPS(p.get<Client::ID>(0), p.get(1));
 		// TODO: finish the creation...
-		break;
+	}
+	break;
 
 	case MessageType::CLIENT_DISCONNECTED:
 		for (std::vector<NetworkedParticleSystem>::iterator it = players.begin(); it != players.end();)
 		{
 			if (it->id == p.get<Client::ID>(0))
 			{
+				delete it->ps;
+
 				it = players.erase(it);
 				return;
 			}
@@ -293,10 +306,10 @@ void ParticleSystemPlayground::createClientInfoPacket(const NetworkedParticleSys
 
 NetworkedParticleSystem& ParticleSystemPlayground::createNPS(Client::ID id, std::string name)
 {
-	players.emplace_back
-		(
-		id, new Fireball(getWindow(), view_main), (name, *scene_log.text().getFont(), 15), false
-		);
+	players.emplace_back(NetworkedParticleSystem
+	{
+		id, new Fireball(getWindow(), view_main), TGO(name, *scene_log.text().getFont(), 15), false
+	});
 
 	NetworkedParticleSystem& nps = players.back();
 

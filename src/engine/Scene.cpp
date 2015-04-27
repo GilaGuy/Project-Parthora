@@ -73,6 +73,7 @@ void Scene::handleEvent(const sf::Event &event)
 	case sf::Event::KeyReleased:
 		if (k == AppWindow::KEY_FULLSCREEN)
 		{
+			unload();
 			getWindow().toggleFullScreen();
 			onload();
 		}

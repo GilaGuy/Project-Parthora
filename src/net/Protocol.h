@@ -75,6 +75,7 @@ struct Client
 	static const ID ID_MYSELF = 0;
 
 	ID id;
+	size_t screenIdx;
 	std::vector<Screen*> externalScreenOccupancies;
 	DynamicClientParams params;
 };
