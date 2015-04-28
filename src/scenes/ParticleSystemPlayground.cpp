@@ -32,6 +32,9 @@ Scene(window, "Particle System Playground"), renderer(window, 1000), me(nullptr)
 {
 	conn.setReceiveHandler(std::bind(&ParticleSystemPlayground::onReceive, this, std::placeholders::_1, std::placeholders::_2));
 
+	particleTexture.loadFromFile("Data/textures/particle_1.tga");
+	particleTexture.setSmooth(true);
+
 	bgm.openFromFile("D:/Dropbox/SFML-Game - backup/SFML-Game/Data/audio/gardenparty_mono.wav");
 }
 
@@ -50,12 +53,19 @@ void ParticleSystemPlayground::onload()
 	bgm.setMinDistance(1000);
 	bgm.setLoop(true);
 
-	conn.start("localhost", 12345);
+	if (conn.start("localhost", 12345))
+	{
+		cout << "Connected to the server!" << endl;
+	}
+	else
+	{
+		cerr << "Failed to connect to the server!" << endl;
+	}
 
 	Packet p;
 
 	createClientInfoPacket(
-		createPlayer(Client::ID_MYSELF, "Teguh", new Fireball(getWindow(), view_main))
+		createPlayer(Client::ID_MYSELF, "Teguh", new Fireball(getWindow(), view_main), particleTexture)
 		, p
 		);
 
@@ -238,12 +248,13 @@ void ParticleSystemPlayground::render()
 
 void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 {
+	cout << "recv> " << p.encode() << endl;
+
 	switch (p.mType)
 	{
-	case MessageType::CROSS_SCREENS:
+	case CROSS_SCREENS:
 	{
-		Player& newPlayer = createPlayer(p.get<Client::ID>(0), p.get(1), new Fireball(getWindow(), view_main));
-		// TODO: finish the creation...
+		Player& newPlayer = createPlayer(p.get<Client::ID>(0), p.get(1), new Fireball(getWindow(), view_main), particleTexture);
 		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(2));
 
 		switch (crossDir)
@@ -254,20 +265,38 @@ void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 		case RIGHT:
 			newPlayer.ps->emitterPos.x = 0 - p.get<float>(3);
 			break;
-		default:
-			break;
 		}
 
 		newPlayer.ps->emitterPos.y = p.get<float>(4) * getWindow().getSize().y;
 
 		newPlayer.ps->colorBegin = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
 		newPlayer.ps->colorEnd = sf::Color(p.get<sf::Uint16>(9), p.get<sf::Uint16>(10), p.get<sf::Uint16>(11), p.get<sf::Uint16>(12));
-
-		cout << p.encode() << endl;
 	}
 	break;
 
-	case MessageType::CLIENT_DISCONNECTED:
+	case CROSS_STATUS:
+	{
+		Client::ID clientID = p.get<Client::ID>(0);
+
+		for (Player& player : players)
+		{
+			if (player.id == clientID)
+			{
+				if (p.get<bool>(1))
+				{
+					player.crossingStat = CROSSED_GLOBAL;
+				}
+				else
+				{
+					player.crossingStat = NOT_CROSSED;
+				}
+				return;
+			}
+		}
+	}
+	break;
+
+	case CLIENT_DISCONNECTED:
 		for (std::vector<Player>::iterator it = players.begin(); it != players.end();)
 		{
 			if (it->id == p.get<Client::ID>(0))
@@ -284,7 +313,7 @@ void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 
 void ParticleSystemPlayground::createClientInfoPacket(const Player& player, Packet& p)
 {
-	p.mType = MessageType::CLIENT_INFO;
+	p.mType = CLIENT_INFO;
 
 	p.mParams.clear();
 
@@ -301,7 +330,7 @@ void ParticleSystemPlayground::createClientInfoPacket(const Player& player, Pack
 	p.add('0' + player.ps->colorEnd.a);
 }
 
-Player& ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, ParticleSystem* ps)
+Player& ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture)
 {
 	Player* newPlayer = nullptr;
 
@@ -326,13 +355,14 @@ Player& ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, 
 	newPlayer->id = id;
 
 	newPlayer->ps = ps;
+	newPlayer->ps->setTexture(texture);
 
 	newPlayer->label.text().setFont(*scene_log.text().getFont());
 	newPlayer->label.text().setCharacterSize(15);
 	newPlayer->label.text().setPosition(10, -10);
 	newPlayer->label.text().setString(name);
 
-	newPlayer->crossed = false;
+	newPlayer->crossingStat = NOT_CROSSED;
 
 	newPlayer->ps->add(newPlayer->label);
 
@@ -346,21 +376,19 @@ Player& ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, 
 
 void ParticleSystemPlayground::updatePlayers()
 {
-	float screenPaddingX = getWindow().getSize().x * 0.125;
+	float screenPaddingX = getWindow().getSize().x * 0.125f;
 	float boundaryLeft = screenPaddingX, boundaryRight = getWindow().getSize().x - screenPaddingX;
-	CrossingDirection crossDir = NO_CD;
 
 	Packet p;
-	p.mType = MessageType::CROSS_SCREENS;
+	p.mType = CROSS_SCREENS;
 
 	for (Player& player : players)
 	{
-		if (player.crossed)
+		switch (player.crossingStat)
 		{
-			// check if it's no longer visible, if true, then send a remove tracking msg to the server and delete it.
-		}
-		else
+		case NOT_CROSSED:
 		{
+			CrossingDirection crossDir;
 			float xOffset = 0;
 
 			if (player.ps->emitterPos.x < boundaryLeft)
@@ -389,8 +417,18 @@ void ParticleSystemPlayground::updatePlayers()
 
 				conn.send(p);
 
-				player.crossed = true;
+				player.crossingStat = CROSSED_LOCAL;
 			}
+		}
+		break;
+
+		case CROSSED_LOCAL:
+			// waiting for server to send back crossing success/fail.
+			break;
+
+		case CROSSED_GLOBAL:
+			// check if it's no longer visible, if true, then send a REMOVE_TRACKING msg to the server and delete it.
+			break;
 		}
 	}
 }

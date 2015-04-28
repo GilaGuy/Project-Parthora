@@ -92,7 +92,6 @@ void AppWindow::setScene(Scene::Ptr wS, bool replaceCurrent) {
 		<< "Scene \""
 		<< m_windowScenes.back()->getName()
 		<< "\"" << std::endl;
-
 	std::cout << std::string(80, '-');
 }
 
@@ -125,7 +124,6 @@ void AppWindow::removeScene(Scene::ID id) {
 		<< "Scene \""
 		<< m_windowScenes.back()->getName()
 		<< "\"" << std::endl;
-
 	std::cout << std::string(80, '-');
 }
 

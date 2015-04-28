@@ -24,12 +24,17 @@
 // a particle is created from one screen, crosses to another screen, then disconnects.
 enum MessageType
 {
-	NO_MT, CLIENT_INFO, CROSS_SCREENS, UPDATE_POS, REMOVE_TRACKING, CLIENT_DISCONNECTED
+	NO_MT, CLIENT_INFO, CROSS_SCREENS, CROSS_STATUS, UPDATE_POS, REMOVE_TRACKING, CLIENT_DISCONNECTED
 };
 
 enum CrossingDirection
 {
 	NO_CD, LEFT, RIGHT
+};
+
+enum CrossingStatus
+{
+	NOT_CROSSED, CROSSED_LOCAL, CROSSED_GLOBAL
 };
 
 //-----------------------------------------------------------------------------<
@@ -44,7 +49,6 @@ struct ParticleParams
 struct DynamicClientParams
 {
 	std::string name;
-	float x, y;
 	ParticleParams pp;
 };
 

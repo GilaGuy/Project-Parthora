@@ -15,8 +15,9 @@
 
 #include "BGO.h"
 
-#include <iostream>
 #include "../Renderer.h"
+
+#include <iostream>
 
 id_go BGO::ID_GO = 0;
 
@@ -28,7 +29,7 @@ m_parent(nullptr),
 m_id(++ID_GO),
 m_ignoringChildren(false)
 {
-	std::cout << "Constructed: " << "GO" << "[" << getID() << "]" << std::endl;
+	//std::cout << "Constructed: " << "GO" << "[" << getID() << "]" << std::endl;
 }
 
 /**
@@ -36,7 +37,7 @@ m_ignoringChildren(false)
  */
 BGO::~BGO()
 {
-	std::cout << "Destructed: " << "GO" << "[" << getID() << "]" << std::endl;
+	//std::cout << "Destructed: " << "GO" << "[" << getID() << "]" << std::endl;
 }
 
 /**
@@ -349,7 +350,7 @@ void BGO::drawSceneGraph(Renderer& renderer, sf::RenderStates states) const
 void BGO::drawChildren(Renderer& renderer, sf::RenderStates states) const
 {
 	if (m_children.empty()) return;
-	
+
 	for (const BGO* bgo : m_children)
 	{
 		bgo->drawSceneGraph(renderer, states);

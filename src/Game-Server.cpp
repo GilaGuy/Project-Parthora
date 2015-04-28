@@ -37,6 +37,8 @@ int getScreenIdx(Client::ID ownerID)
 		}
 	}
 
+	cerr << "Client screen not found! Owner ID: " << ownerID << endl;
+
 	return -1;
 }
 
@@ -51,22 +53,22 @@ void onConnect(Client* c)
 
 void onReceive(const Packet& p, Client* c)
 {
+	cout << "recv> " << p.encode() << endl;
+
 	switch (p.mType)
 	{
-	case MessageType::CLIENT_INFO:
+	case CLIENT_INFO:
 		c->params.name = p.get(0);
 		c->params.pp.colorBegin = sf::Color(p.get<sf::Uint16>(1), p.get<sf::Uint16>(2), p.get<sf::Uint16>(3), p.get<sf::Uint16>(4));
 		c->params.pp.colorEnd = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
 		break;
 
-	case MessageType::CROSS_SCREENS:
+	case CROSS_SCREENS:
 	{
 		Client::ID clientID = p.get<Client::ID>(0); // the client that's crossing screens
 		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(2));
 		int clientScreen = clientID == Client::ID_MYSELF ? c->screenIdx : getScreenIdx(clientID);
 		int targetScreen = clientScreen;
-
-		if (clientScreen == -1) return;
 
 		switch (crossDir)
 		{
@@ -76,40 +78,61 @@ void onReceive(const Packet& p, Client* c)
 		case RIGHT:
 			++targetScreen;
 			break;
-		default:
-			break;
 		}
 
-		if (targetScreen < 0 || targetScreen == screens.size()) return;
+		// check if screen exists and send back the status to the client
+
+		Packet pCrossingStatus;
+		pCrossingStatus.mType = CROSS_STATUS;
+
+		if ((clientScreen == -1)
+			||
+			(targetScreen < 0 || targetScreen == screens.size()))
+		{
+			pCrossingStatus.add(clientID);
+			pCrossingStatus.add(false);
+			Server::send(pCrossingStatus, c); // < not working...
+			return;
+		}
+		else
+		{
+			pCrossingStatus.add(clientID);
+			pCrossingStatus.add(true);
+			Server::send(pCrossingStatus, c);
+		}
+
+		// add the new screen to the client's list of external screens
+
+		screens.at(clientScreen).owner->externalScreenOccupancies.push_back(&screens.at(targetScreen));
 
 		// add more params from the client that's crossing...
 
-		Packet pCS = p;
+		Packet pCrossScreens = p;
 
 		Client* crossingClient = screens.at(clientScreen).owner;
 
-		pCS.add(crossingClient->params.pp.colorBegin.r);
-		pCS.add(crossingClient->params.pp.colorBegin.g);
-		pCS.add(crossingClient->params.pp.colorBegin.b);
-		pCS.add(crossingClient->params.pp.colorBegin.a);
+		pCrossScreens.add(crossingClient->params.pp.colorBegin.r);
+		pCrossScreens.add(crossingClient->params.pp.colorBegin.g);
+		pCrossScreens.add(crossingClient->params.pp.colorBegin.b);
+		pCrossScreens.add(crossingClient->params.pp.colorBegin.a);
 
-		pCS.add(crossingClient->params.pp.colorEnd.r);
-		pCS.add(crossingClient->params.pp.colorEnd.g);
-		pCS.add(crossingClient->params.pp.colorEnd.b);
-		pCS.add(crossingClient->params.pp.colorEnd.a);
+		pCrossScreens.add(crossingClient->params.pp.colorEnd.r);
+		pCrossScreens.add(crossingClient->params.pp.colorEnd.g);
+		pCrossScreens.add(crossingClient->params.pp.colorEnd.b);
+		pCrossScreens.add(crossingClient->params.pp.colorEnd.a);
 
-		cout << pCS.encode() << endl;
+		cout << pCrossScreens.encode() << endl;
 
 		// send a CROSS_SCREENS msg to the owner of the target screen
-		Server::send(pCS, screens.at(targetScreen).owner);
+		Server::send(pCrossScreens, screens.at(targetScreen).owner);
 	}
 	break;
 
-	case MessageType::UPDATE_POS:
+	case UPDATE_POS:
 		cout << "UPDATE POS" << endl;
 		break;
 
-	case MessageType::REMOVE_TRACKING:
+	case REMOVE_TRACKING:
 		break;
 
 	default:
@@ -129,7 +152,7 @@ void onDisconnect(Client* c)
 			{
 				Packet p;
 
-				p.mType = MessageType::CLIENT_DISCONNECTED;
+				p.mType = CLIENT_DISCONNECTED;
 				p.add(c->id);
 
 				for (Screen* s : c->externalScreenOccupancies)

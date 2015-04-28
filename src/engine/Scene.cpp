@@ -26,7 +26,7 @@ m_window(window),
 m_id(++SCENE_ID),
 m_sceneName(name)
 {
-	std::cout << "Constructed: " << "Scene" << "[" << getID() << "] \"" << getName() << "\"" << std::endl;
+	//std::cout << "Constructed: " << "Scene" << "[" << getID() << "] \"" << getName() << "\"" << std::endl;
 
 	scene_font.loadFromFile("Data/fonts/consolas.ttf");
 	scene_log.text().setFont(scene_font);
@@ -35,7 +35,7 @@ m_sceneName(name)
 
 Scene::~Scene()
 {
-	std::cout << "Destructed: " << "Scene" << "[" << getID() << "] \"" << getName() << "\"" << std::endl;
+	//std::cout << "Destructed: " << "Scene" << "[" << getID() << "] \"" << getName() << "\"" << std::endl;
 }
 
 const std::string& Scene::getName() const

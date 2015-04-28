@@ -34,6 +34,8 @@ bool Connection::start(std::string serverIP, unsigned int port)
 
 	if (socket.connect(serverIP, port) != sf::Socket::Done) return false;
 
+	clientThread.launch();
+
 	return true;
 }
 

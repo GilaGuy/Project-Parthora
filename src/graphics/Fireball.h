@@ -22,8 +22,6 @@ private:
 	AppWindow& window;
 	sf::View& view;
 
-	sf::Texture texture;
-
 	sf::Vector2f lastEmitterPos;
 
 	sf::SoundBuffer sb;

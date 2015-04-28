@@ -36,10 +36,6 @@ waveAmp()
 	colorEnd = sf::Color(128, 240, 255);
 	alphaMin = alphaMax = 128 / 10;
 
-	texture.loadFromFile("Data/textures/particle_1.tga");
-	texture.setSmooth(true);
-	setTexture(texture);
-
 	sb.loadFromFile("Data/audio/SWOOSH_loop.wav");
 	swoosh.setBuffer(sb);
 	swoosh.setLoop(true);
