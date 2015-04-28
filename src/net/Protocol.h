@@ -21,10 +21,10 @@
 // ENUMS -----------------------------------------------------------------------
 
 // Listed in chronological order of a simple scenario in which
-// a particle from one screen is created, then crosses to another then disconnecting.
+// a particle is created from one screen, crosses to another screen, then disconnects.
 enum MessageType
 {
-	NO_MT, CLIENT_INFO, CROSS_SCREENS, CLIENT_NEW, UPDATE_POS, REMOVE_TRACKING, CLIENT_DISCONNECTED
+	NO_MT, CLIENT_INFO, CROSS_SCREENS, UPDATE_POS, REMOVE_TRACKING, CLIENT_DISCONNECTED
 };
 
 enum CrossingDirection

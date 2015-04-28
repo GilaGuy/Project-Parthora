@@ -29,12 +29,10 @@ public:
 	void update(const sf::Time &deltaTime) override;
 	void render() override;
 
-	void randomizeParticleColors(ParticleSystem* ps);
-
 	void onReceive(const Packet& p, sf::TcpSocket& socket);
 
 	void createClientInfoPacket(const Player& player, Packet& p);
-	Player& createPlayer(Client::ID id, std::string name);
+	Player& createPlayer(Client::ID id, std::string name, ParticleSystem* ps);
 
 	void updatePlayers();
 

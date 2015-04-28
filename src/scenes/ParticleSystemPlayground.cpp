@@ -21,6 +21,12 @@
 
 using namespace std;
 
+void randomizeParticleColors(ParticleSystem* ps)
+{
+	ps->colorBegin = sf::Color(rand() & 255, rand() & 255, rand() & 255);
+	ps->colorEnd = sf::Color(rand() & 255, rand() & 255, rand() & 255);
+}
+
 ParticleSystemPlayground::ParticleSystemPlayground(AppWindow &window) :
 Scene(window, "Particle System Playground"), renderer(window, 1000), me(nullptr)
 {
@@ -43,12 +49,15 @@ void ParticleSystemPlayground::onload()
 	bgm.setPosition(view_main.getCenter().x, view_main.getCenter().y, 0);
 	bgm.setMinDistance(1000);
 	bgm.setLoop(true);
-	bgm.play();
 
 	conn.start("localhost", 12345);
 
 	Packet p;
-	createClientInfoPacket(createPlayer(Client::ID_MYSELF, "Teguh"), p);
+
+	createClientInfoPacket(
+		createPlayer(Client::ID_MYSELF, "Teguh", new Fireball(getWindow(), view_main))
+		, p
+		);
 
 	conn.send(p);
 }
@@ -78,7 +87,14 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 	switch (event.type)
 	{
 	case sf::Event::MouseMoved:
-		if (me != nullptr) me->ps->emitterPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
+		if (me == nullptr)
+		{
+			// TODO send MOVE packet to server
+		}
+		else
+		{
+			me->ps->emitterPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
+		}
 		break;
 
 	case sf::Event::MouseWheelMoved:
@@ -220,20 +236,34 @@ void ParticleSystemPlayground::render()
 	getWindow().display();
 }
 
-void ParticleSystemPlayground::randomizeParticleColors(ParticleSystem* ps)
-{
-	ps->colorBegin = sf::Color(rand() & 255, rand() & 255, rand() & 255);
-	ps->colorEnd = sf::Color(rand() & 255, rand() & 255, rand() & 255);
-}
-
 void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 {
 	switch (p.mType)
 	{
-	case MessageType::CLIENT_NEW:
+	case MessageType::CROSS_SCREENS:
 	{
-		Player& newPlayer = createPlayer(p.get<Client::ID>(0), p.get(1));
+		Player& newPlayer = createPlayer(p.get<Client::ID>(0), p.get(1), new Fireball(getWindow(), view_main));
 		// TODO: finish the creation...
+		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(2));
+
+		switch (crossDir)
+		{
+		case LEFT:
+			newPlayer.ps->emitterPos.x = getWindow().getSize().x + p.get<float>(3);
+			break;
+		case RIGHT:
+			newPlayer.ps->emitterPos.x = 0 - p.get<float>(3);
+			break;
+		default:
+			break;
+		}
+
+		newPlayer.ps->emitterPos.y = p.get<float>(4) * getWindow().getSize().y;
+
+		newPlayer.ps->colorBegin = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
+		newPlayer.ps->colorEnd = sf::Color(p.get<sf::Uint16>(9), p.get<sf::Uint16>(10), p.get<sf::Uint16>(11), p.get<sf::Uint16>(12));
+
+		cout << p.encode() << endl;
 	}
 	break;
 
@@ -271,24 +301,47 @@ void ParticleSystemPlayground::createClientInfoPacket(const Player& player, Pack
 	p.add('0' + player.ps->colorEnd.a);
 }
 
-Player& ParticleSystemPlayground::createPlayer(Client::ID id, std::string name)
+Player& ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, ParticleSystem* ps)
 {
-	players.emplace_back(Player
+	Player* newPlayer = nullptr;
+
+	// check if player already exists
+	for (Player& p : players)
 	{
-		id, new Fireball(getWindow(), view_main), TGO(name, *scene_log.text().getFont(), 15), false
-	});
+		if (p.id == id)
+		{
+			newPlayer = &p;
+			delete newPlayer->ps;
+		}
+	}
 
-	Player& player = players.back();
+	// create new player if they're not found
+	if (newPlayer == nullptr)
+	{
+		players.emplace_back(Player());
 
-	player.label.text().setPosition(10, -10);
-	player.ps->add(player.label);
+		newPlayer = &players.back();
+	}
+
+	newPlayer->id = id;
+
+	newPlayer->ps = ps;
+
+	newPlayer->label.text().setFont(*scene_log.text().getFont());
+	newPlayer->label.text().setCharacterSize(15);
+	newPlayer->label.text().setPosition(10, -10);
+	newPlayer->label.text().setString(name);
+
+	newPlayer->crossed = false;
+
+	newPlayer->ps->add(newPlayer->label);
 
 	if (id == Client::ID_MYSELF)
 	{
-		me = &player;
+		me = newPlayer;
 	}
 
-	return player;
+	return *newPlayer;
 }
 
 void ParticleSystemPlayground::updatePlayers()
@@ -302,15 +355,23 @@ void ParticleSystemPlayground::updatePlayers()
 
 	for (Player& player : players)
 	{
-		if (!player.crossed)
+		if (player.crossed)
 		{
+			// check if it's no longer visible, if true, then send a remove tracking msg to the server and delete it.
+		}
+		else
+		{
+			float xOffset = 0;
+
 			if (player.ps->emitterPos.x < boundaryLeft)
 			{
 				crossDir = LEFT;
+				xOffset = 0 + player.ps->emitterPos.x;
 			}
 			else if (player.ps->emitterPos.x > boundaryRight)
 			{
 				crossDir = RIGHT;
+				xOffset = getWindow().getSize().x - player.ps->emitterPos.x;
 			}
 			else
 			{
@@ -320,8 +381,10 @@ void ParticleSystemPlayground::updatePlayers()
 			if (crossDir != NO_CD)
 			{
 				p.mParams.clear();
-				p.add((int)crossDir);
 				p.add(player.id);
+				p.add(player.label.text().getString().toAnsiString());
+				p.add((int)crossDir);
+				p.add(xOffset);
 				p.add(player.ps->emitterPos.y / getWindow().getSize().y);
 
 				conn.send(p);

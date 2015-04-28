@@ -61,20 +61,47 @@ void onReceive(const Packet& p, Client* c)
 
 	case MessageType::CROSS_SCREENS:
 	{
-		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(0));
-		Client::ID clientID = p.get<Client::ID>(1); // the client that's crossing screens
-		int targetScreen = clientID == Client::ID_MYSELF ? c->screenIdx : getScreenIdx(clientID);
+		Client::ID clientID = p.get<Client::ID>(0); // the client that's crossing screens
+		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(2));
+		int clientScreen = clientID == Client::ID_MYSELF ? c->screenIdx : getScreenIdx(clientID);
+		int targetScreen = clientScreen;
 
-		if (targetScreen == -1) return;
+		if (clientScreen == -1) return;
 
-		if (crossDir == LEFT) targetScreen = --targetScreen;
-		else if (crossDir == RIGHT) targetScreen = ++targetScreen;
+		switch (crossDir)
+		{
+		case LEFT:
+			--targetScreen;
+			break;
+		case RIGHT:
+			++targetScreen;
+			break;
+		default:
+			break;
+		}
 
 		if (targetScreen < 0 || targetScreen == screens.size()) return;
 
-		// send a CLIENT_INFO msg to the owner of the target screen
+		// add more params from the client that's crossing...
 
-		Packet p;
+		Packet pCS = p;
+
+		Client* crossingClient = screens.at(clientScreen).owner;
+
+		pCS.add(crossingClient->params.pp.colorBegin.r);
+		pCS.add(crossingClient->params.pp.colorBegin.g);
+		pCS.add(crossingClient->params.pp.colorBegin.b);
+		pCS.add(crossingClient->params.pp.colorBegin.a);
+
+		pCS.add(crossingClient->params.pp.colorEnd.r);
+		pCS.add(crossingClient->params.pp.colorEnd.g);
+		pCS.add(crossingClient->params.pp.colorEnd.b);
+		pCS.add(crossingClient->params.pp.colorEnd.a);
+
+		cout << pCS.encode() << endl;
+
+		// send a CROSS_SCREENS msg to the owner of the target screen
+		Server::send(pCS, screens.at(targetScreen).owner);
 	}
 	break;
 
