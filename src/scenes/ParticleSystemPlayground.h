@@ -29,6 +29,8 @@ public:
 	void update(const sf::Time &deltaTime) override;
 	void render() override;
 
+	void setControlParticle(bool arg, sf::Vector2f syncLocation = sf::Vector2f());
+
 	void createClientInfoPacket(const Player& player, Packet& p);
 	Player& createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
 
@@ -40,6 +42,8 @@ private:
 	sf::View view_hud, view_main;
 	Renderer renderer;
 	Connection conn;
+
+	bool isControllingParticle;
 
 	Player* me;
 	std::vector<Player> players;
