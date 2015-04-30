@@ -105,9 +105,11 @@ void onReceive(const Packet& p, Client* c)
 
 		screens.at(clientScreen).owner->externalScreenOccupancies.push_back(&screens.at(targetScreen));
 
-		// add more params from the client that's crossing...
+		// relay the packet to the target client with the new info
 
 		Packet pCrossScreens = p;
+
+		pCrossScreens.mParams.at(0) = to_string(screens.at(clientScreen).owner->id);
 
 		Client* crossingClient = screens.at(clientScreen).owner;
 
@@ -120,8 +122,6 @@ void onReceive(const Packet& p, Client* c)
 		pCrossScreens.add(crossingClient->params.pp.colorEnd.g);
 		pCrossScreens.add(crossingClient->params.pp.colorEnd.b);
 		pCrossScreens.add(crossingClient->params.pp.colorEnd.a);
-
-		cout << pCrossScreens.encode() << endl;
 
 		// send a CROSS_SCREENS msg to the owner of the target screen
 		Server::send(pCrossScreens, screens.at(targetScreen).owner);
