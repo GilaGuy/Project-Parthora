@@ -66,7 +66,7 @@ void onReceive(const Packet& p, Client* c)
 	case CROSS_SCREENS:
 	{
 		Client::ID clientID = p.get<Client::ID>(0); // the client that's crossing screens
-		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(2));
+		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(1));
 		int clientScreen = clientID == Client::ID_MYSELF ? c->screenIdx : getScreenIdx(clientID);
 		int targetScreen = clientScreen;
 
@@ -108,10 +108,11 @@ void onReceive(const Packet& p, Client* c)
 		// relay the packet to the target client with the new info
 
 		Packet pCrossScreens = p;
-
-		pCrossScreens.mParams.at(0) = to_string(screens.at(clientScreen).owner->id);
-
 		Client* crossingClient = screens.at(clientScreen).owner;
+
+		pCrossScreens.mParams.at(0) = to_string(crossingClient->id);
+
+		pCrossScreens.add(crossingClient->params.name);
 
 		pCrossScreens.add(crossingClient->params.pp.colorBegin.r);
 		pCrossScreens.add(crossingClient->params.pp.colorBegin.g);

@@ -30,7 +30,7 @@ void randomizeParticleColors(ParticleSystem* ps)
 ParticleSystemPlayground::ParticleSystemPlayground(AppWindow &window) :
 Scene(window, "Particle System Playground"), renderer(window, 1000), me(nullptr)
 {
-	conn.setReceiveHandler(std::bind(&ParticleSystemPlayground::onReceive, this, std::placeholders::_1, std::placeholders::_2));
+	conn.setReceiveHandler(std::bind(&ParticleSystemPlayground::onReceive, this, std::placeholders::_1));
 
 	particleTexture.loadFromFile("Data/textures/particle_1.tga");
 	particleTexture.setSmooth(true);
@@ -285,7 +285,7 @@ void ParticleSystemPlayground::createClientInfoPacket(const Player& player, Pack
 
 	p.mParams.clear();
 
-	p.add(player.id);
+	p.add(player.label.text().getString().toAnsiString());
 
 	p.add('0' + player.ps->colorBegin.r);
 	p.add('0' + player.ps->colorBegin.g);
@@ -339,10 +339,12 @@ Player& ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, 
 		me = newPlayer;
 	}
 
+	cout << "Player added! ID: " << id << endl;
+
 	return *newPlayer;
 }
 
-void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
+void ParticleSystemPlayground::onReceive(const Packet& p)
 {
 	cout << "recv> " << p.encode() << endl;
 
@@ -350,20 +352,20 @@ void ParticleSystemPlayground::onReceive(const Packet& p, sf::TcpSocket& socket)
 	{
 	case CROSS_SCREENS:
 	{
-		Player& newPlayer = createPlayer(p.get<Client::ID>(0), p.get(1), new Fireball(getWindow(), view_main), particleTexture);
-		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(2));
+		Player& newPlayer = createPlayer(p.get<Client::ID>(0), p.get(4), new Fireball(getWindow(), view_main), particleTexture);
+		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(1));
 
 		switch (crossDir)
 		{
 		case LEFT:
-			newPlayer.ps->emitterPos.x = getWindow().getSize().x + p.get<float>(3);
+			newPlayer.ps->emitterPos.x = getWindow().getSize().x + p.get<float>(2);
 			break;
 		case RIGHT:
-			newPlayer.ps->emitterPos.x = 0 - p.get<float>(3);
+			newPlayer.ps->emitterPos.x = 0 - p.get<float>(2);
 			break;
 		}
 
-		newPlayer.ps->emitterPos.y = p.get<float>(4) * getWindow().getSize().y;
+		newPlayer.ps->emitterPos.y = p.get<float>(3) * getWindow().getSize().y;
 
 		newPlayer.ps->colorBegin = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
 		newPlayer.ps->colorEnd = sf::Color(p.get<sf::Uint16>(9), p.get<sf::Uint16>(10), p.get<sf::Uint16>(11), p.get<sf::Uint16>(12));
@@ -443,7 +445,6 @@ void ParticleSystemPlayground::updatePlayers()
 			{
 				p.mParams.clear();
 				p.add(player.id);
-				p.add(player.label.text().getString().toAnsiString());
 				p.add((int)crossDir);
 				p.add(xOffset);
 				p.add(player.ps->emitterPos.y / getWindow().getSize().y);

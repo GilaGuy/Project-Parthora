@@ -34,7 +34,7 @@ public:
 	void createClientInfoPacket(const Player& player, Packet& p);
 	Player& createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
 
-	void onReceive(const Packet& p, sf::TcpSocket& socket);
+	void onReceive(const Packet& p);
 
 	void updatePlayers();
 

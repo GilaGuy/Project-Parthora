@@ -11,7 +11,7 @@ public:
 	Connection();
 	~Connection();
 
-	void setReceiveHandler(std::function<void(const Packet&, sf::TcpSocket&)> onReceive);
+	void setReceiveHandler(std::function<void(const Packet&)> onReceive);
 
 	bool start(std::string serverIP, unsigned int port);
 	void stop();
@@ -23,7 +23,7 @@ private:
 
 	sf::TcpSocket socket;
 	sf::Thread clientThread;
-	std::function<void(const Packet&, sf::TcpSocket&)> callbackOnReceive;
+	std::function<void(const Packet&)> callbackOnReceive;
 
 	bool isConnected;
 };

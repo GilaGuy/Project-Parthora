@@ -23,7 +23,7 @@ callbackOnReceive(nullptr)
 Connection::~Connection()
 {}
 
-void Connection::setReceiveHandler(std::function<void(const Packet&, sf::TcpSocket&)> onReceive)
+void Connection::setReceiveHandler(std::function<void(const Packet&)> onReceive)
 {
 	callbackOnReceive = onReceive;
 }
@@ -63,7 +63,7 @@ void Connection::receiveThread()
 		if (socket.receive(buffer, PACKET_SIZE, received) == sf::Socket::Done)
 		{
 			p.decode(buffer);
-			callbackOnReceive(p, socket);
+			callbackOnReceive(p);
 		}
 		else
 		{
