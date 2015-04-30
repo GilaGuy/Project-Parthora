@@ -24,14 +24,14 @@ using namespace std;
 Client::ID clientID = 0;
 Screen::ID screenID = 0;
 
-std::vector<Screen> screens;
-typedef std::vector<Screen>::iterator screen_iterator;
+std::vector<Screen*> screens;
+typedef std::vector<Screen*>::iterator screen_iterator;
 
 int getScreenIdx(Client::ID ownerID)
 {
 	for (int s = 0; s < screens.size(); ++s)
 	{
-		if (screens[s].owner->id == ownerID)
+		if (screens[s]->owner->id == ownerID)
 		{
 			return s;
 		}
@@ -46,9 +46,15 @@ void onConnect(Client* c)
 {
 	cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " connected!" << endl;
 
+	screens.push_back(new Screen());
+
+	Screen* newScreen = screens.back();
+	newScreen->id = ++screenID;
+	newScreen->owner = c;
+
 	c->id = ++clientID;
-	c->screenIdx = screens.size();
-	screens.push_back({ ++screenID, c });
+	c->screenOwned = screens.back();
+	c->screenCurrent = c->screenOwned;
 }
 
 void onReceive(const Packet& p, Client* c)
@@ -57,84 +63,143 @@ void onReceive(const Packet& p, Client* c)
 
 	switch (p.mType)
 	{
-	case CLIENT_INFO:
+	case PLAYER_INFO:
 		c->params.name = p.get(0);
-		c->params.pp.colorBegin = sf::Color(p.get<sf::Uint16>(1), p.get<sf::Uint16>(2), p.get<sf::Uint16>(3), p.get<sf::Uint16>(4));
-		c->params.pp.colorEnd = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
+		c->screenOwned->size.x = p.get<unsigned int>(1);
+		c->screenOwned->size.y = p.get<unsigned int>(2);
+		c->params.ps.emitterPos.x = p.get<float>(3);
+		c->params.ps.emitterPos.y = p.get<float>(4);
+		c->screenOwned->boundaryLeft = c->screenOwned->size.x * 0.125f;
+		c->screenOwned->boundaryRight = c->screenOwned->size.x - c->screenOwned->boundaryLeft;
+		c->params.ps.colorBegin = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
+		c->params.ps.colorEnd = sf::Color(p.get<sf::Uint16>(9), p.get<sf::Uint16>(10), p.get<sf::Uint16>(11), p.get<sf::Uint16>(12));
 		break;
 
-	case CROSS_SCREENS:
+	case UPDATE_POS:
 	{
-		Client::ID clientID = p.get<Client::ID>(0); // the client that's crossing screens
-		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(1));
-		int clientScreen = clientID == Client::ID_MYSELF ? c->screenIdx : getScreenIdx(clientID);
-		int targetScreen = clientScreen;
+		int clientScreenIdx = getScreenIdx(c->id);
+		int targetScreenIdx = clientScreenIdx;
+		Client* client = screens.at(clientScreenIdx)->owner; // the client that's crossing screens
 
-		switch (crossDir)
+		if (clientScreenIdx == -1)
 		{
-		case LEFT:
-			--targetScreen;
-			break;
-		case RIGHT:
-			++targetScreen;
-			break;
+			cerr << "UPDATE_POS: Packet sender's screen not found!!" << endl;
 		}
 
-		// check if screen exists and send back the status to the client
+		client->params.ps.emitterPos.x += p.get<float>(1);
 
-		Packet pCrossingStatus;
-		pCrossingStatus.mType = CROSS_STATUS;
+		Cross cross;
+		float xOffset = 0;
 
-		if ((clientScreen == -1)
-			||
-			(targetScreen < 0 || targetScreen == screens.size()))
+		if (client->params.ps.emitterPos.x < client->screenCurrent->boundaryLeft)
 		{
-			pCrossingStatus.add(clientID);
-			pCrossingStatus.add(false);
-			Server::send(pCrossingStatus, c); // < not working...
-			return;
+			cross = CROSS_LEFT;
+			xOffset = 0 + client->params.ps.emitterPos.x;
+			--targetScreenIdx;
+		}
+		else if (client->params.ps.emitterPos.x > client->screenCurrent->boundaryRight)
+		{
+			cross = CROSS_RIGHT;
+			xOffset = client->screenCurrent->size.x - client->params.ps.emitterPos.x;
+			++targetScreenIdx;
 		}
 		else
 		{
-			pCrossingStatus.add(clientID);
-			pCrossingStatus.add(true);
-			Server::send(pCrossingStatus, c);
+			cross = NO_CROSS;
 		}
 
-		// add the new screen to the client's list of external screens
+		if (cross == NO_CROSS) // within boundaries
+		{
+			if (!client->externalScreenOccupancies.empty())
+			{
+				Packet pDeletePlayer;
 
-		screens.at(clientScreen).owner->externalScreenOccupancies.push_back(&screens.at(targetScreen));
+				pDeletePlayer.mType = DELETE_PLAYER;
+				pDeletePlayer.add(client->id);
 
-		// relay the packet to the target client with the new info
+				if (client->externalScreenOccupancies.size() > 1)
+				{
+					for (Screen* s : client->externalScreenOccupancies)
+					{
+						if (s != client->screenCurrent) Server::send(pDeletePlayer, s->owner);
+					}
+					client->externalScreenOccupancies.clear();
+					client->externalScreenOccupancies.insert(client->screenCurrent);
+				}
+				else
+				{
+					if (client->externalScreenOccupancies.find(client->screenCurrent)
+						== client->externalScreenOccupancies.end())
+					{
+						cerr << "UHOH, the client's only external screen occupancy is not their current screen!!" << endl;
+					}
+				}
+			}
+		}
+		else // beyond boundaries
+		{
+			if (targetScreenIdx >= 0 && targetScreenIdx < screens.size())
+			{
+				Screen* targetScreen = screens.at(targetScreenIdx);
 
-		Packet pCrossScreens = p;
-		Client* crossingClient = screens.at(clientScreen).owner;
+				if (std::find(client->externalScreenOccupancies.begin(),
+					client->externalScreenOccupancies.end(),
+					targetScreen)
+					== client->externalScreenOccupancies.end())
+				{
+					Packet pNewPlayer;
+					pNewPlayer.mType = NEW_PLAYER;
 
-		pCrossScreens.mParams.at(0) = to_string(crossingClient->id);
+					pNewPlayer.add(targetScreen == client->screenOwned ? Client::ID_MYSELF : client->id);
+					pNewPlayer.add((int)cross);
+					pNewPlayer.add(xOffset);
+					pNewPlayer.add(c->params.ps.emitterPos.y / c->screenCurrent->size.y);
 
-		pCrossScreens.add(crossingClient->params.name);
+					pNewPlayer.add(client->params.name);
 
-		pCrossScreens.add(crossingClient->params.pp.colorBegin.r);
-		pCrossScreens.add(crossingClient->params.pp.colorBegin.g);
-		pCrossScreens.add(crossingClient->params.pp.colorBegin.b);
-		pCrossScreens.add(crossingClient->params.pp.colorBegin.a);
+					pNewPlayer.add(client->params.ps.colorBegin.r);
+					pNewPlayer.add(client->params.ps.colorBegin.g);
+					pNewPlayer.add(client->params.ps.colorBegin.b);
+					pNewPlayer.add(client->params.ps.colorBegin.a);
 
-		pCrossScreens.add(crossingClient->params.pp.colorEnd.r);
-		pCrossScreens.add(crossingClient->params.pp.colorEnd.g);
-		pCrossScreens.add(crossingClient->params.pp.colorEnd.b);
-		pCrossScreens.add(crossingClient->params.pp.colorEnd.a);
+					pNewPlayer.add(client->params.ps.colorEnd.r);
+					pNewPlayer.add(client->params.ps.colorEnd.g);
+					pNewPlayer.add(client->params.ps.colorEnd.b);
+					pNewPlayer.add(client->params.ps.colorEnd.a);
 
-		// send a CROSS_SCREENS msg to the owner of the target screen
-		Server::send(pCrossScreens, screens.at(targetScreen).owner);
+					Server::send(pNewPlayer, targetScreen->owner);
+
+					client->externalScreenOccupancies.insert(targetScreen);
+
+					// beyond screen
+					if (client->params.ps.emitterPos.x < 0)
+					{
+						client->params.ps.emitterPos.x = client->screenCurrent->size.x - client->params.ps.emitterPos.x;
+						client->screenCurrent = targetScreen;
+					}
+					else if (client->params.ps.emitterPos.x > client->screenCurrent->size.x)
+					{
+						client->params.ps.emitterPos.x = client->params.ps.emitterPos.x - client->screenCurrent->size.x;
+						client->screenCurrent = targetScreen;
+					}
+				}
+			}
+		}
+
+		if (!client->externalScreenOccupancies.empty())
+		{
+			Packet pUpdatePos = p;
+
+			pUpdatePos.mType = UPDATE_POS;
+			pUpdatePos.add(client->id);
+
+			for (Screen* s : client->externalScreenOccupancies)
+			{
+				Server::send(pUpdatePos, s->owner);
+			}
+		}
 	}
 	break;
-
-	case UPDATE_POS:
-		cout << "UPDATE POS" << endl;
-		break;
-
-	case REMOVE_TRACKING:
-		break;
 
 	default:
 		cout << "WUT" << endl;
@@ -147,13 +212,13 @@ void onDisconnect(Client* c)
 
 	for (screen_iterator it = screens.begin(); it != screens.end();)
 	{
-		if (it->owner == c)
+		if ((*it)->owner == c)
 		{
 			if (!c->externalScreenOccupancies.empty())
 			{
 				Packet p;
 
-				p.mType = CLIENT_DISCONNECTED;
+				p.mType = DELETE_PLAYER;
 				p.add(c->id);
 
 				for (Screen* s : c->externalScreenOccupancies)
@@ -161,6 +226,8 @@ void onDisconnect(Client* c)
 					Server::send(p, s->owner);
 				}
 			}
+
+			delete c->screenOwned;
 
 			it = screens.erase(it);
 			return;

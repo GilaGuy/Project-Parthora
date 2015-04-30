@@ -17,6 +17,7 @@
 
 #include <SFML/Network.hpp>
 #include <SFML/Graphics.hpp>
+#include <set>
 
 // ENUMS -----------------------------------------------------------------------
 
@@ -24,17 +25,12 @@
 // a particle is created from one screen, crosses to another screen, then disconnects.
 enum MessageType
 {
-	NO_MT, CLIENT_INFO, CROSS_SCREENS, CROSS_STATUS, UPDATE_POS, REMOVE_TRACKING, CLIENT_DISCONNECTED
+	NO_MT, PLAYER_INFO, UPDATE_POS, NEW_PLAYER, DELETE_PLAYER
 };
 
-enum CrossingDirection
+enum Cross
 {
-	NO_CD, LEFT, RIGHT
-};
-
-enum CrossingStatus
-{
-	NOT_CROSSED, CROSSED_LOCAL, CROSSED_GLOBAL
+	NO_CROSS, CROSS_LEFT, CROSS_RIGHT
 };
 
 //-----------------------------------------------------------------------------<
@@ -43,13 +39,14 @@ enum CrossingStatus
 
 struct ParticleParams
 {
+	sf::Vector2f emitterPos;
 	sf::Color colorBegin, colorEnd;
 };
 
 struct DynamicClientParams
 {
 	std::string name;
-	ParticleParams pp;
+	ParticleParams ps;
 };
 
 //-----------------------------------------------------------------------------<
@@ -64,6 +61,8 @@ struct Screen
 
 	ID id;
 	Client* owner;
+	sf::Vector2u size;
+	float boundaryLeft, boundaryRight;
 };
 
 //-----------------------------------------------------------------------------<
@@ -79,8 +78,8 @@ struct Client
 	static const ID ID_MYSELF = 0;
 
 	ID id;
-	size_t screenIdx;
-	std::vector<Screen*> externalScreenOccupancies;
+	Screen *screenOwned, *screenCurrent;
+	std::set<Screen*> externalScreenOccupancies;
 	DynamicClientParams params;
 };
 

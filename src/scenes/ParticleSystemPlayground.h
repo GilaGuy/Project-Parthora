@@ -14,7 +14,6 @@ struct Player
 	Client::ID id;
 	ParticleSystem* ps;
 	TGO label;
-	CrossingStatus crossingStat;
 };
 
 class ParticleSystemPlayground : public Scene
@@ -31,7 +30,7 @@ public:
 
 	void setControlParticle(bool arg, sf::Vector2f syncLocation = sf::Vector2f());
 
-	void createClientInfoPacket(const Player* player, Packet& p);
+	void createPlayerInfoPacket(const Player* player, Packet& p);
 	Player* createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
 
 	void onReceive(const Packet& p);
