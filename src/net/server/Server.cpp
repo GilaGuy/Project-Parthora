@@ -21,6 +21,9 @@
 void Server::send(Packet p, Client* c)
 {
 	c->socket.send(p.encode().c_str(), PACKET_SIZE);
+
+	if (p.mType != UPDATE_POS)
+		std::cout << "sent> " << p.encode() << std::endl;
 }
 
 Server::Server() :

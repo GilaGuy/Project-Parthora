@@ -47,6 +47,7 @@ public:
 	int getFPS() const;
 	sf::Vector2i getDesktopCenter() const;
 	sf::Vector2f getMousePositionRelativeToWindowAndView(const sf::View &view) const;
+	void setMousePositionRelativeToWindowAndView(const sf::Vector2f pos, const sf::View &view);
 	sf::View getCurrentView() const;
 
 	void run();

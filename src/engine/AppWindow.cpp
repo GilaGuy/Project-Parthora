@@ -179,6 +179,10 @@ sf::Vector2f AppWindow::getMousePositionRelativeToWindowAndView(const sf::View &
 	return mapPixelToCoords(sf::Mouse::getPosition(*this), view);
 }
 
+void AppWindow::setMousePositionRelativeToWindowAndView(const sf::Vector2f pos, const sf::View &view) {
+	sf::Mouse::setPosition(mapCoordsToPixel(pos, view), *this);
+}
+
 sf::View AppWindow::getCurrentView() const {
 	sf::Vector2u size = getSize();
 	return sf::View(

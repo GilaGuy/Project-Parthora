@@ -59,7 +59,10 @@ void onConnect(Client* c)
 
 void onReceive(const Packet& p, Client* c)
 {
-	cout << "recv> " << p.encode() << endl;
+
+	if (p.mType != UPDATE_POS)
+		cout << "recv> " << p.encode() << endl;
+
 
 	switch (p.mType)
 	{
@@ -71,8 +74,8 @@ void onReceive(const Packet& p, Client* c)
 		c->params.ps.emitterPos.y = p.get<float>(4);
 		c->screenOwned->boundaryLeft = c->screenOwned->size.x * 0.125f;
 		c->screenOwned->boundaryRight = c->screenOwned->size.x - c->screenOwned->boundaryLeft;
-		c->params.ps.colorBegin = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
-		c->params.ps.colorEnd = sf::Color(p.get<sf::Uint16>(9), p.get<sf::Uint16>(10), p.get<sf::Uint16>(11), p.get<sf::Uint16>(12));
+		c->params.ps.colorBegin = sf::Color(p.get<sf::Uint32>(5), p.get<sf::Uint32>(6), p.get<sf::Uint32>(7), p.get<sf::Uint32>(8));
+		c->params.ps.colorEnd = sf::Color(p.get<sf::Uint32>(9), p.get<sf::Uint32>(10), p.get<sf::Uint32>(11), p.get<sf::Uint32>(12));
 		break;
 
 	case UPDATE_POS:
@@ -86,7 +89,8 @@ void onReceive(const Packet& p, Client* c)
 			cerr << "UPDATE_POS: Packet sender's screen not found!!" << endl;
 		}
 
-		client->params.ps.emitterPos.x += p.get<float>(1);
+		client->params.ps.emitterPos.x += p.get<float>(0);
+		client->params.ps.emitterPos.y += p.get<float>(1);
 
 		Cross cross;
 		float xOffset = 0;
@@ -131,7 +135,7 @@ void onReceive(const Packet& p, Client* c)
 					if (client->externalScreenOccupancies.find(client->screenCurrent)
 						== client->externalScreenOccupancies.end())
 					{
-						cerr << "UHOH, the client's only external screen occupancy is not their current screen!!" << endl;
+						cerr << "UH OH, the client's only external screen occupancy is not their current screen!!" << endl;
 					}
 				}
 			}
@@ -157,31 +161,31 @@ void onReceive(const Packet& p, Client* c)
 
 					pNewPlayer.add(client->params.name);
 
-					pNewPlayer.add(client->params.ps.colorBegin.r);
-					pNewPlayer.add(client->params.ps.colorBegin.g);
-					pNewPlayer.add(client->params.ps.colorBegin.b);
-					pNewPlayer.add(client->params.ps.colorBegin.a);
+					pNewPlayer.add<sf::Uint32>(client->params.ps.colorBegin.r);
+					pNewPlayer.add<sf::Uint32>(client->params.ps.colorBegin.g);
+					pNewPlayer.add<sf::Uint32>(client->params.ps.colorBegin.b);
+					pNewPlayer.add<sf::Uint32>(client->params.ps.colorBegin.a);
 
-					pNewPlayer.add(client->params.ps.colorEnd.r);
-					pNewPlayer.add(client->params.ps.colorEnd.g);
-					pNewPlayer.add(client->params.ps.colorEnd.b);
-					pNewPlayer.add(client->params.ps.colorEnd.a);
+					pNewPlayer.add<sf::Uint32>(client->params.ps.colorEnd.r);
+					pNewPlayer.add<sf::Uint32>(client->params.ps.colorEnd.g);
+					pNewPlayer.add<sf::Uint32>(client->params.ps.colorEnd.b);
+					pNewPlayer.add<sf::Uint32>(client->params.ps.colorEnd.a);
 
 					Server::send(pNewPlayer, targetScreen->owner);
 
 					client->externalScreenOccupancies.insert(targetScreen);
+				}
 
-					// beyond screen
-					if (client->params.ps.emitterPos.x < 0)
-					{
-						client->params.ps.emitterPos.x = client->screenCurrent->size.x - client->params.ps.emitterPos.x;
-						client->screenCurrent = targetScreen;
-					}
-					else if (client->params.ps.emitterPos.x > client->screenCurrent->size.x)
-					{
-						client->params.ps.emitterPos.x = client->params.ps.emitterPos.x - client->screenCurrent->size.x;
-						client->screenCurrent = targetScreen;
-					}
+				// beyond screen
+				if (client->params.ps.emitterPos.x < 0)
+				{
+					client->params.ps.emitterPos.x = client->screenCurrent->size.x - client->params.ps.emitterPos.x;
+					client->screenCurrent = targetScreen;
+				}
+				else if (client->params.ps.emitterPos.x > client->screenCurrent->size.x)
+				{
+					client->params.ps.emitterPos.x = client->params.ps.emitterPos.x - client->screenCurrent->size.x;
+					client->screenCurrent = targetScreen;
 				}
 			}
 		}

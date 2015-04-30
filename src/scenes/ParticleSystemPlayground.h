@@ -28,14 +28,14 @@ public:
 	void update(const sf::Time &deltaTime) override;
 	void render() override;
 
-	void setControlParticle(bool arg, sf::Vector2f syncLocation = sf::Vector2f());
+	void randomizeParticleColors(Player* player);
+
+	void setControlParticle(bool arg);
 
 	void createPlayerInfoPacket(const Player* player, Packet& p);
 	Player* createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
 
 	void onReceive(const Packet& p);
-
-	void networkUpdates();
 
 private:
 	sf::View view_hud, view_main;
@@ -43,6 +43,7 @@ private:
 	Connection conn;
 
 	bool isControllingParticle;
+	sf::Vector2f lastPos;
 
 	Player* me;
 	std::vector<Player*> players;

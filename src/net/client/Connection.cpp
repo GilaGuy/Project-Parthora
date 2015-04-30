@@ -14,6 +14,8 @@
 
 #include "Connection.h"
 
+#include <iostream>
+
 Connection::Connection() :
 isConnected(false),
 clientThread(&Connection::receiveThread, this),
@@ -26,6 +28,18 @@ Connection::~Connection()
 void Connection::setReceiveHandler(std::function<void(const Packet&)> onReceive)
 {
 	callbackOnReceive = onReceive;
+}
+
+std::vector<Packet> Connection::getPendingPackets()
+{
+	mutex_pendingPackets.lock();
+
+	std::vector<Packet> copyOfPendingPackets = pendingPackets;
+	pendingPackets.clear();
+
+	mutex_pendingPackets.unlock();
+
+	return copyOfPendingPackets;
 }
 
 bool Connection::start(std::string serverIP, unsigned int port)
@@ -49,6 +63,9 @@ void Connection::stop()
 void Connection::send(const Packet& p)
 {
 	socket.send(p.encode().c_str(), PACKET_SIZE);
+
+	if (p.mType != UPDATE_POS)
+		std::cout << "sent> " << p.encode() << std::endl;
 }
 
 void Connection::receiveThread()
@@ -66,7 +83,11 @@ void Connection::receiveThread()
 
 			if (callbackOnReceive == nullptr)
 			{
+				mutex_pendingPackets.lock();
+
 				pendingPackets.push_back(p);
+
+				mutex_pendingPackets.unlock();
 			}
 			else
 			{
