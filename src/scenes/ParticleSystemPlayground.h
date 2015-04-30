@@ -31,12 +31,12 @@ public:
 
 	void setControlParticle(bool arg, sf::Vector2f syncLocation = sf::Vector2f());
 
-	void createClientInfoPacket(const Player& player, Packet& p);
-	Player& createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
+	void createClientInfoPacket(const Player* player, Packet& p);
+	Player* createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
 
 	void onReceive(const Packet& p);
 
-	void updatePlayers();
+	void networkUpdates();
 
 private:
 	sf::View view_hud, view_main;
@@ -46,7 +46,7 @@ private:
 	bool isControllingParticle;
 
 	Player* me;
-	std::vector<Player> players;
+	std::vector<Player*> players;
 
 	sf::Texture particleTexture;
 	sf::Music bgm;

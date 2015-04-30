@@ -30,7 +30,7 @@ void randomizeParticleColors(ParticleSystem* ps)
 ParticleSystemPlayground::ParticleSystemPlayground(AppWindow &window) :
 Scene(window, "Particle System Playground"), renderer(window, 1000), me(nullptr)
 {
-	conn.setReceiveHandler(std::bind(&ParticleSystemPlayground::onReceive, this, std::placeholders::_1));
+	//conn.setReceiveHandler(std::bind(&ParticleSystemPlayground::onReceive, this, std::placeholders::_1));
 
 	particleTexture.loadFromFile("Data/textures/particle_1.tga");
 	particleTexture.setSmooth(true);
@@ -81,9 +81,9 @@ void ParticleSystemPlayground::unload()
 
 	bgm.stop();
 
-	for (Player& player : players)
+	for (Player* player : players)
 	{
-		delete player.ps;
+		delete player->ps;
 	}
 	players.clear();
 
@@ -166,9 +166,9 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 			setControlParticle(isControllingParticle = !isControllingParticle, view_main.getCenter());
 			break;
 		case sf::Keyboard::Delete:
-			for (Player& player : players)
+			for (Player* player : players)
 			{
-				player.ps->clear();
+				player->ps->clear();
 			}
 			break;
 
@@ -188,9 +188,9 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 			break;
 		case sf::Keyboard::P:
 			particleBuilder = !particleBuilder;
-			for (Player& player : players)
+			for (Player* player : players)
 			{
-				player.ps->setBuilder(particleBuilder ? ParticleBuilders::pbPoint : ParticleBuilders::pbSprite);
+				player->ps->setBuilder(particleBuilder ? ParticleBuilders::pbPoint : ParticleBuilders::pbSprite);
 			}
 			break;
 		case sf::Keyboard::M:
@@ -211,14 +211,14 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 
 void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 {
-	for (Player& player : players)
-	{
-		player.ps->update(deltaTime);
-	}
-
 	//view_main.move(view_main_offset);
 
-	updatePlayers();
+	networkUpdates();
+
+	for (Player* player : players)
+	{
+		player->ps->update(deltaTime);
+	}
 
 	scene_log.text().setString(
 		"[FPS]: " + std::to_string(getWindow().getFPS())
@@ -231,9 +231,9 @@ void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 		+ "\nTotal: " + std::to_string(ParticleSystem::TotalParticleCount)
 		);
 
-	for (Player& player : players)
+	for (Player* player : players)
 	{
-		scene_log.text().setString(scene_log.text().getString() + "\n>" + player.label.text().getString() + ": " + std::to_string(player.ps->getParticleCount()));
+		scene_log.text().setString(scene_log.text().getString() + "\n>" + player->label.text().getString() + ": " + std::to_string(player->ps->getParticleCount()));
 	}
 }
 
@@ -247,9 +247,9 @@ void ParticleSystemPlayground::render()
 
 	renderer.begin();
 
-	for (Player& player : players)
+	for (Player* player : players)
 	{
-		renderer.draw(player.ps);
+		renderer.draw(player->ps);
 	}
 
 	renderer.end();
@@ -279,35 +279,35 @@ void ParticleSystemPlayground::setControlParticle(bool arg, sf::Vector2f syncLoc
 	}
 }
 
-void ParticleSystemPlayground::createClientInfoPacket(const Player& player, Packet& p)
+void ParticleSystemPlayground::createClientInfoPacket(const Player* player, Packet& p)
 {
 	p.mType = CLIENT_INFO;
 
 	p.mParams.clear();
 
-	p.add(player.label.text().getString().toAnsiString());
+	p.add(player->label.text().getString().toAnsiString());
 
-	p.add('0' + player.ps->colorBegin.r);
-	p.add('0' + player.ps->colorBegin.g);
-	p.add('0' + player.ps->colorBegin.b);
-	p.add('0' + player.ps->colorBegin.a);
+	p.add('0' + player->ps->colorBegin.r);
+	p.add('0' + player->ps->colorBegin.g);
+	p.add('0' + player->ps->colorBegin.b);
+	p.add('0' + player->ps->colorBegin.a);
 
-	p.add('0' + player.ps->colorEnd.r);
-	p.add('0' + player.ps->colorEnd.g);
-	p.add('0' + player.ps->colorEnd.b);
-	p.add('0' + player.ps->colorEnd.a);
+	p.add('0' + player->ps->colorEnd.r);
+	p.add('0' + player->ps->colorEnd.g);
+	p.add('0' + player->ps->colorEnd.b);
+	p.add('0' + player->ps->colorEnd.a);
 }
 
-Player& ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture)
+Player* ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture)
 {
 	Player* newPlayer = nullptr;
 
 	// check if player already exists
-	for (Player& p : players)
+	for (Player* p : players)
 	{
-		if (p.id == id)
+		if (p->id == id)
 		{
-			newPlayer = &p;
+			newPlayer = p;
 			delete newPlayer->ps;
 		}
 	}
@@ -315,9 +315,9 @@ Player& ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, 
 	// create new player if they're not found
 	if (newPlayer == nullptr)
 	{
-		players.emplace_back(Player());
+		players.push_back(new Player());
 
-		newPlayer = &players.back();
+		newPlayer = players.back();
 	}
 
 	newPlayer->id = id;
@@ -341,7 +341,7 @@ Player& ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, 
 
 	cout << "Player added! ID: " << id << endl;
 
-	return *newPlayer;
+	return newPlayer;
 }
 
 void ParticleSystemPlayground::onReceive(const Packet& p)
@@ -352,23 +352,23 @@ void ParticleSystemPlayground::onReceive(const Packet& p)
 	{
 	case CROSS_SCREENS:
 	{
-		Player& newPlayer = createPlayer(p.get<Client::ID>(0), p.get(4), new Fireball(getWindow(), view_main), particleTexture);
+		Player* newPlayer = createPlayer(p.get<Client::ID>(0), p.get(4), new Fireball(getWindow(), view_main), particleTexture);
 		CrossingDirection crossDir = static_cast<CrossingDirection>(p.get<int>(1));
 
 		switch (crossDir)
 		{
 		case LEFT:
-			newPlayer.ps->emitterPos.x = getWindow().getSize().x + p.get<float>(2);
+			newPlayer->ps->emitterPos.x = getWindow().getSize().x + p.get<float>(2);
 			break;
 		case RIGHT:
-			newPlayer.ps->emitterPos.x = 0 - p.get<float>(2);
+			newPlayer->ps->emitterPos.x = 0 - p.get<float>(2);
 			break;
 		}
 
-		newPlayer.ps->emitterPos.y = p.get<float>(3) * getWindow().getSize().y;
+		newPlayer->ps->emitterPos.y = p.get<float>(3) * getWindow().getSize().y;
 
-		newPlayer.ps->colorBegin = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
-		newPlayer.ps->colorEnd = sf::Color(p.get<sf::Uint16>(9), p.get<sf::Uint16>(10), p.get<sf::Uint16>(11), p.get<sf::Uint16>(12));
+		newPlayer->ps->colorBegin = sf::Color(p.get<sf::Uint16>(5), p.get<sf::Uint16>(6), p.get<sf::Uint16>(7), p.get<sf::Uint16>(8));
+		newPlayer->ps->colorEnd = sf::Color(p.get<sf::Uint16>(9), p.get<sf::Uint16>(10), p.get<sf::Uint16>(11), p.get<sf::Uint16>(12));
 	}
 	break;
 
@@ -376,17 +376,17 @@ void ParticleSystemPlayground::onReceive(const Packet& p)
 	{
 		Client::ID clientID = p.get<Client::ID>(0);
 
-		for (Player& player : players)
+		for (Player* player : players)
 		{
-			if (player.id == clientID)
+			if (player->id == clientID)
 			{
 				if (p.get<bool>(1))
 				{
-					player.crossingStat = CROSSED_GLOBAL;
+					player->crossingStat = CROSSED_GLOBAL;
 				}
 				else
 				{
-					player.crossingStat = NOT_CROSSED;
+					player->crossingStat = NOT_CROSSED;
 				}
 				return;
 			}
@@ -395,46 +395,57 @@ void ParticleSystemPlayground::onReceive(const Packet& p)
 	break;
 
 	case CLIENT_DISCONNECTED:
-		for (std::vector<Player>::iterator it = players.begin(); it != players.end();)
+	{
+		Client::ID clientID = p.get<Client::ID>(0);
+
+		for (std::vector<Player*>::iterator it = players.begin(); it != players.end();)
 		{
-			if (it->id == p.get<Client::ID>(0))
+			if ((*it)->id == clientID)
 			{
-				delete it->ps;
+				delete (*it)->ps;
+				delete (*it);
 
 				it = players.erase(it);
 				return;
 			}
 		}
-		break;
+	}
+	break;
 	}
 }
 
-void ParticleSystemPlayground::updatePlayers()
+void ParticleSystemPlayground::networkUpdates()
 {
+	for (Packet& p : conn.pendingPackets)
+	{
+		onReceive(p);
+	}
+	conn.pendingPackets.clear();
+
 	float screenPaddingX = getWindow().getSize().x * 0.125f;
 	float boundaryLeft = screenPaddingX, boundaryRight = getWindow().getSize().x - screenPaddingX;
 
 	Packet p;
 	p.mType = CROSS_SCREENS;
 
-	for (Player& player : players)
+	for (Player* player : players)
 	{
-		switch (player.crossingStat)
+		switch (player->crossingStat)
 		{
 		case NOT_CROSSED:
 		{
 			CrossingDirection crossDir;
 			float xOffset = 0;
 
-			if (player.ps->emitterPos.x < boundaryLeft)
+			if (player->ps->emitterPos.x < boundaryLeft)
 			{
 				crossDir = LEFT;
-				xOffset = 0 + player.ps->emitterPos.x;
+				xOffset = 0 + player->ps->emitterPos.x;
 			}
-			else if (player.ps->emitterPos.x > boundaryRight)
+			else if (player->ps->emitterPos.x > boundaryRight)
 			{
 				crossDir = RIGHT;
-				xOffset = getWindow().getSize().x - player.ps->emitterPos.x;
+				xOffset = getWindow().getSize().x - player->ps->emitterPos.x;
 			}
 			else
 			{
@@ -444,14 +455,14 @@ void ParticleSystemPlayground::updatePlayers()
 			if (crossDir != NO_CD)
 			{
 				p.mParams.clear();
-				p.add(player.id);
+				p.add(player->id);
 				p.add((int)crossDir);
 				p.add(xOffset);
-				p.add(player.ps->emitterPos.y / getWindow().getSize().y);
+				p.add(player->ps->emitterPos.y / getWindow().getSize().y);
 
 				conn.send(p);
 
-				player.crossingStat = CROSSED_LOCAL;
+				player->crossingStat = CROSSED_LOCAL;
 			}
 		}
 		break;

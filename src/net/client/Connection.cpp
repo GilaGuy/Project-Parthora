@@ -63,7 +63,15 @@ void Connection::receiveThread()
 		if (socket.receive(buffer, PACKET_SIZE, received) == sf::Socket::Done)
 		{
 			p.decode(buffer);
-			callbackOnReceive(p);
+
+			if (callbackOnReceive == nullptr)
+			{
+				pendingPackets.push_back(p);
+			}
+			else
+			{
+				callbackOnReceive(p);
+			}
 		}
 		else
 		{

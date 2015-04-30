@@ -18,6 +18,8 @@ public:
 
 	void send(const Packet& p);
 
+	std::vector<Packet> pendingPackets;
+
 private:
 	void receiveThread();
 
