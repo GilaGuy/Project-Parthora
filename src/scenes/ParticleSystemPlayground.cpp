@@ -16,20 +16,21 @@
 
 #include "../engine/AppWindow.h"
 #include "../graphics/Fireball.h"
+#include "../Game.h"
 
 #include <iostream>
 
 using namespace std;
 
 ParticleSystemPlayground::ParticleSystemPlayground(AppWindow &window) :
-Scene(window, "Particle System Playground"), renderer(window, 1000), me(nullptr)
+Scene(window, "Melvin Loho"), renderer(window, 1000), me(nullptr)
 {
 	//conn.setReceiveHandler(std::bind(&ParticleSystemPlayground::onReceive, this, std::placeholders::_1));
 
 	particleTexture.loadFromFile("Data/textures/particle_1.tga");
 	particleTexture.setSmooth(true);
 
-	bgm.openFromFile("D:/Dropbox/SFML-Game - backup/SFML-Game/Data/audio/gardenparty_mono.wav");
+	bgm.openFromFile("Data/audio/gardenparty_mono.wav");
 }
 
 ParticleSystemPlayground::~ParticleSystemPlayground()
@@ -43,7 +44,7 @@ void ParticleSystemPlayground::onload()
 
 	sf::Vector2f center = view_main.getCenter();
 
-	if (conn.start("localhost", 12345))
+	if (conn.start(GameSettings::serverIP, 12345))
 	{
 		cout << "Connected to the server!" << endl;
 	}
@@ -186,8 +187,8 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 			break;
 		case sf::Keyboard::M:
 			music1Toggle = !music1Toggle;
-			if (music1Toggle) bgm.stop();
-			else bgm.play();
+			if (music1Toggle) bgm.play();
+			else bgm.stop();
 			break;
 		}
 		break;
@@ -196,6 +197,9 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 		view_hud = getWindow().getCurrentView();
 		view_main.setSize(view_hud.getSize());
 		view_main.setCenter(getWindow().getSize().x * 0.5f, getWindow().getSize().y * 0.5f);
+
+		getWindow().setMousePositionRelativeToWindowAndView(view_main.getCenter(), view_main);
+		getWindow().pollEvent(sf::Event());
 		break;
 	}
 }
@@ -203,6 +207,8 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 {
 	//view_main.move(view_main_offset);
+
+	ParticleSystem::TotalParticleCount = 0;
 
 	for (const Packet& p : conn.getPendingPackets())
 	{
@@ -215,7 +221,10 @@ void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 	}
 
 	scene_log.text().setString(
-		"[FPS]: " + std::to_string(getWindow().getFPS())
+		getWindow().getName() + " by " + getName()
+		+ "\n"
+		+ "\n"
+		+ "[FPS]: " + std::to_string(getWindow().getFPS())
 		+ "\n"
 		+ "\n[RENDERER]"
 		+ "\nDraw calls: " + std::to_string(renderer.getDrawCallCount())
@@ -275,13 +284,11 @@ void ParticleSystemPlayground::setControlParticle(bool arg)
 	{
 		getWindow().setMouseCursorVisible(false);
 
-		getWindow().setMousePositionRelativeToWindowAndView(lastPos, view_main);
+		getWindow().setMousePositionRelativeToWindowAndView(view_main.getCenter(), view_main);
 		getWindow().pollEvent(sf::Event());
 	}
 	else
 	{
-		lastPos = getWindow().getMousePositionRelativeToWindowAndView(view_main);
-
 		getWindow().setMouseCursorVisible(true);
 	}
 }

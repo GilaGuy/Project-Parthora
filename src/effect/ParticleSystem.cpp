@@ -125,7 +125,7 @@ void ParticleSystem::update(const sf::Time &deltaTime)
 	// UPDATE STATS
 
 	dirtyVertices = true;
-	TotalParticleCount += m_vertexCount / m_singleParticleVertexCount - TotalParticleCount;
+	TotalParticleCount += m_vertexCount / m_singleParticleVertexCount;
 }
 
 void ParticleSystem::setTexture(const sf::Texture &texture)

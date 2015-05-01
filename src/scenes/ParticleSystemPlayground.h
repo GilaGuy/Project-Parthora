@@ -43,7 +43,6 @@ private:
 	Connection conn;
 
 	bool isControllingParticle;
-	sf::Vector2f lastPos;
 
 	Player* me;
 	std::vector<Player*> players;

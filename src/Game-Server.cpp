@@ -253,8 +253,13 @@ int main()
 
 	server.start(12345);
 
+	cout << "[-Project Parthora-]" << endl;
+	cout << "by Melvin Loho" << endl;
+	cout << endl;
+
 	cout << "Server running..." << endl;
 	cout << "Enter k to kill the server" << endl;
+	cout << endl;
 
 	while (getchar() != 'k');
 
@@ -266,5 +271,5 @@ int main()
 
 	cout << "Server stopped!" << endl;
 
-	return 0;
+	return EXIT_SUCCESS;
 }

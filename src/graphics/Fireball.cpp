@@ -42,7 +42,7 @@ waveAmp()
 	swoosh.setVolume(0);
 	swoosh.play();
 
-	shader_shake.loadFromFile("D:/Repositories/term-project/Source/Assets/shaders/wave.vert", sf::Shader::Vertex);
+	shader_shake.loadFromFile("Data/shaders/wave.vert", sf::Shader::Vertex);
 }
 
 Fireball::~Fireball()
