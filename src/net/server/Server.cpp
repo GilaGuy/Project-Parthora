@@ -53,7 +53,7 @@ void Server::setDisconnectHandler(std::function<void(Client*)> onDisconnect)
 	callbackOnDisconnect = onDisconnect;
 }
 
-bool Server::start(unsigned int port)
+bool Server::start(unsigned short port)
 {
 	if (isRunning()) return false;
 

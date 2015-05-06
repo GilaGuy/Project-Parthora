@@ -16,6 +16,7 @@
 #include <map>
 #include "net\server\Server.h"
 #include "net\Protocol.h"
+#include "GameSettings.h"
 
 #include <iostream>
 
@@ -24,8 +25,8 @@ using namespace std;
 Client::ID clientID = 0;
 Screen::ID screenID = 0;
 
-std::vector<Screen*> screens;
-typedef std::vector<Screen*>::iterator screen_iterator;
+vector<Screen*> screens;
+typedef vector<Screen*>::iterator screen_iterator;
 
 int getScreenIdx(Client::ID ownerID)
 {
@@ -146,7 +147,7 @@ void onReceive(const Packet& p, Client* c)
 			{
 				Screen* targetScreen = screens.at(targetScreenIdx);
 
-				if (std::find(client->externalScreenOccupancies.begin(),
+				if (find(client->externalScreenOccupancies.begin(),
 					client->externalScreenOccupancies.end(),
 					targetScreen)
 					== client->externalScreenOccupancies.end())
@@ -243,21 +244,30 @@ void onDisconnect(Client* c)
 	}
 }
 
-int main()
+int main(int argc, char const *argv[])
 {
+	if (argc > 1)
+	{
+		GameSettings::serverPort = stoul(argv[1]);
+	}
+
 	Server server;
 
 	server.setConnectHandler(onConnect);
 	server.setReceiveHandler(onReceive);
 	server.setDisconnectHandler(onDisconnect);
 
-	server.start(12345);
+	if (!server.start(GameSettings::serverPort))
+	{
+		cerr << "Server failed to start!" << endl;
+		return EXIT_FAILURE;
+	}
 
 	cout << "[-Project Parthora-]" << endl;
 	cout << "by Melvin Loho" << endl;
 	cout << endl;
 
-	cout << "Server running..." << endl;
+	cout << "Server running on..." << GameSettings::toString() << endl;
 	cout << "Enter k to kill the server" << endl;
 	cout << endl;
 

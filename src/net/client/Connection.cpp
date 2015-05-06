@@ -42,7 +42,7 @@ std::vector<Packet> Connection::getPendingPackets()
 	return copyOfPendingPackets;
 }
 
-bool Connection::start(std::string serverIP, unsigned int port)
+bool Connection::start(std::string serverIP, unsigned short port)
 {
 	if (isConnected) return false;
 

@@ -15,7 +15,7 @@ public:
 	void setReceiveHandler(std::function<void(const Packet&)> onReceive);
 	std::vector<Packet> getPendingPackets();
 
-	bool start(std::string serverIP, unsigned int port);
+	bool start(std::string serverIP, unsigned short port);
 	void stop();
 
 	void send(const Packet& p);

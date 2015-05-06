@@ -22,7 +22,7 @@ public:
 	void setReceiveHandler(std::function<void(const Packet&, Client*)> onReceive);
 	void setDisconnectHandler(std::function<void(Client*)> onDisconnect);
 
-	bool start(unsigned int port);
+	bool start(unsigned short port);
 	void stop();
 
 	client_iterator killClient(client_iterator it_c);
