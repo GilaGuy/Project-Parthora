@@ -23,14 +23,20 @@
 
 // Listed in chronological order of a simple scenario in which
 // a particle is created from one screen, crosses to another screen, then disconnects.
-enum MessageType
+enum PacketType
 {
-	NO_MT, PLAYER_INFO, UPDATE_POS, NEW_PLAYER, DELETE_PLAYER
+	NO_MT,
+	PLAYER_INFO,
+	UPDATE_POS,
+	NEW_PLAYER,
+	DELETE_PLAYER
 };
 
 enum Cross
 {
-	NO_CROSS, CROSS_LEFT, CROSS_RIGHT
+	NO_CROSS,
+	CROSS_LEFT,
+	CROSS_RIGHT
 };
 
 //-----------------------------------------------------------------------------<

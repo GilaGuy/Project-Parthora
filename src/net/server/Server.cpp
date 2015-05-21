@@ -20,10 +20,13 @@
 
 void Server::send(Packet p, Client* c)
 {
-	c->socket.send(p.encode().c_str(), PACKET_SIZE);
+	std::string toSend;
+	size_t length = p.encode(toSend);
+
+	c->socket.send(toSend.c_str(), length);
 
 	if (p.mType != UPDATE_POS)
-		std::cout << "sent> " << p.encode() << std::endl;
+		std::cout << "sent> " << toSend << std::endl;
 }
 
 Server::Server() :
@@ -128,12 +131,12 @@ void Server::receiveThread()
 
 					if (selector.isReady(c->socket))
 					{
-						char buffer[PACKET_SIZE]; Packet p;
+						char buffer[Packet::MAX_SIZE]; Packet p;
 
 						size_t received;
-						if (c->socket.receive(buffer, PACKET_SIZE, received) == sf::Socket::Done)
+						if (c->socket.receive(buffer, Packet::MAX_SIZE, received) == sf::Socket::Done)
 						{
-							p.decode(buffer);
+							p.decode(buffer, received);
 							callbackOnReceive(p, c);
 
 							++it_c;

@@ -62,10 +62,13 @@ void Connection::stop()
 
 void Connection::send(const Packet& p)
 {
-	socket.send(p.encode().c_str(), PACKET_SIZE);
+	std::string toSend;
+	size_t length = p.encode(toSend);
+
+	socket.send(toSend.c_str(), length);
 
 	if (p.mType != UPDATE_POS)
-		std::cout << "sent> " << p.encode() << std::endl;
+		std::cout << "sent> " << toSend << std::endl;
 }
 
 void Connection::receiveThread()
@@ -74,12 +77,12 @@ void Connection::receiveThread()
 
 	while (isConnected)
 	{
-		char buffer[PACKET_SIZE]; Packet p;
+		char buffer[Packet::MAX_SIZE]; Packet p;
 
 		size_t received;
-		if (socket.receive(buffer, PACKET_SIZE, received) == sf::Socket::Done)
+		if (socket.receive(buffer, Packet::MAX_SIZE, received) == sf::Socket::Done)
 		{
-			p.decode(buffer);
+			p.decode(buffer, received);
 
 			if (callbackOnReceive == nullptr)
 			{

@@ -4,21 +4,20 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <SFML/Network.hpp>
 #include "Protocol.h"
-
-#define PACKET_SIZE 1024
-#define PACKET_SEP 0x7F
 
 struct Packet
 {
+	static const size_t MAX_SIZE = 256;
+	static const char DATA_SEPARATOR = 0x1F;
+
 	template < class T >
 	T get(size_t pos) const
 	{
 		std::stringstream converter;
 		T data;
 
-		converter << mParams.at(pos);
+		converter << mData.at(pos);
 		converter >> data;
 
 		return data;
@@ -26,7 +25,7 @@ struct Packet
 
 	inline std::string get(size_t pos) const
 	{
-		return mParams.at(pos);
+		return mData.at(pos);
 	}
 
 	template < class T >
@@ -38,19 +37,20 @@ struct Packet
 		converter << t;
 		converter >> data;
 
-		mParams.push_back(data);
+		mData.push_back(data);
 	}
 
 	inline void add(std::string str)
 	{
-		mParams.push_back(str);
+		mData.push_back(str);
 	}
 
-	std::string encode() const;
-	bool decode(std::string raw);
+	bool decode(const char* raw, size_t numOfBytes);
+	size_t encode(std::string& encoded) const;
+	std::string toString() const;
 
-	MessageType mType;
-	std::vector<std::string> mParams;
+	PacketType mType;
+	std::vector<std::string> mData;
 };
 
 #endif // PACKET_H

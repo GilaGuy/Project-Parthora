@@ -14,8 +14,8 @@
  */
 
 #include <map>
-#include "net\server\Server.h"
-#include "net\Protocol.h"
+#include "net/server/Server.h"
+#include "net/Protocol.h"
 #include "GameSettings.h"
 
 #include <iostream>
@@ -62,7 +62,7 @@ void onReceive(const Packet& p, Client* c)
 {
 
 	if (p.mType != UPDATE_POS)
-		cout << "recv> " << p.encode() << endl;
+		cout << "recv> " << p.toString() << endl;
 
 
 	switch (p.mType)

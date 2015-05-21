@@ -3,7 +3,8 @@
  *
  * @date       April 20, 2015
  *
- * @revisions
+ * @revisions  May 21, 2015
+ *             Improved packet decoding and encoding.
  *
  * @designer   Melvin Loho
  *
@@ -33,32 +34,47 @@ std::vector<std::string> split(const std::string &s, char delim) {
 	return elems;
 }
 
-std::string Packet::encode() const
+bool Packet::decode(const char* raw, size_t numOfBytes)
 {
-	std::string data;
-
-	data += static_cast<int>(mType);
-	data += PACKET_SEP;
-
-	for (std::string p : mParams)
-	{
-		data += p;
-		data += PACKET_SEP;
-	}
-
-	data.pop_back();
-
-	return data;
-}
-
-bool Packet::decode(std::string raw)
-{
-	auto dataArray = split(raw, PACKET_SEP);
-
-	if (dataArray.empty()) return false;
-
-	mType = static_cast<MessageType>(dataArray.front().front());
-	mParams = std::vector<std::string>(dataArray.begin() + 1, dataArray.end());
+	mData = split(std::string(raw, numOfBytes), DATA_SEPARATOR);
+	mType = static_cast<PacketType>(get<int>(0));
+	mData.erase(mData.begin());
 
 	return true;
+}
+
+size_t Packet::encode(std::string& encoded) const
+{
+	encoded.clear();
+
+	encoded += static_cast<int>(mType)+'0';
+
+	for (const std::string d : mData)
+	{
+		encoded += DATA_SEPARATOR;
+		encoded += d;
+	}
+
+	// If we want to make all the packets have a fixed length
+	/*
+	if (encoded.length() < MAX_SIZE)
+	encoded += std::string(MAX_SIZE - encoded.length(), '\0');
+	*/
+
+	return encoded.length();
+}
+
+std::string Packet::toString() const
+{
+	std::string str;
+
+	str += static_cast<int>(mType)+'0';
+
+	for (const std::string d : mData)
+	{
+		str += DATA_SEPARATOR;
+		str += d;
+	}
+
+	return str;
 }

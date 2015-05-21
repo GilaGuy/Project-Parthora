@@ -137,7 +137,7 @@ void ParticleSystem::setTexture(const sf::Texture &texture)
 
 void ParticleSystem::setBuilder(ParticleBuilder &builder)
 {
-	if (builder.getCount() > m_vCountMax) throw std::exception("Particle system can't hold all these vertices!!"); //Solution: Change m_vertices into a vector...
+	if (builder.getCount() > m_vCountMax) throw "Particle system can't hold all these vertices!!"; //Solution: Change m_vertices into a vector...
 	m_builder = &builder;
 	m_pType = builder.getType();
 	m_singleParticleVertexCount = builder.getCount();
