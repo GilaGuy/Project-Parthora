@@ -27,9 +27,9 @@ enum PacketType
 {
 	NO_MT,
 	PLAYER_INFO,
-	UPDATE_POS,
-	NEW_PLAYER,
-	DELETE_PLAYER
+	PLAYER_POS,
+	PLAYER_NEW,
+	PLAYER_DEL
 };
 
 enum Cross
