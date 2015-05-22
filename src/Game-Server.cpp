@@ -17,6 +17,7 @@
 #include "net/server/Server.h"
 #include "net/Protocol.h"
 #include "GameSettings.h"
+#include "net/PacketCreator.h"
 
 #include <iostream>
 
@@ -58,28 +59,28 @@ void onConnect(Client* c)
 	c->screenCurrent = c->screenOwned;
 }
 
-void onReceive(const Packet& p, Client* c)
+void onReceive(const Packet& receivedPacket, Client* c)
 {
 
-	if (p.mType != UPDATE_POS)
-		cout << "recv> " << p.toString() << endl;
+	if (receivedPacket.mType != PLAYER_POS)
+		cout << "onReceive> " << receivedPacket.toString() << endl;
 
 
-	switch (p.mType)
+	switch (receivedPacket.mType)
 	{
 	case PLAYER_INFO:
-		c->params.name = p.get(0);
-		c->screenOwned->size.x = p.get<unsigned int>(1);
-		c->screenOwned->size.y = p.get<unsigned int>(2);
-		c->params.ps.emitterPos.x = p.get<float>(3);
-		c->params.ps.emitterPos.y = p.get<float>(4);
+		c->params.name = receivedPacket.get(0);
+		c->screenOwned->size.x = receivedPacket.get<unsigned int>(1);
+		c->screenOwned->size.y = receivedPacket.get<unsigned int>(2);
+		c->params.ps.emitterPos.x = receivedPacket.get<float>(3);
+		c->params.ps.emitterPos.y = receivedPacket.get<float>(4);
 		c->screenOwned->boundaryLeft = c->screenOwned->size.x * 0.125f;
 		c->screenOwned->boundaryRight = c->screenOwned->size.x - c->screenOwned->boundaryLeft;
-		c->params.ps.colorBegin = sf::Color(p.get<sf::Uint32>(5), p.get<sf::Uint32>(6), p.get<sf::Uint32>(7), p.get<sf::Uint32>(8));
-		c->params.ps.colorEnd = sf::Color(p.get<sf::Uint32>(9), p.get<sf::Uint32>(10), p.get<sf::Uint32>(11), p.get<sf::Uint32>(12));
+		c->params.ps.colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(5), receivedPacket.get<sf::Uint32>(6), receivedPacket.get<sf::Uint32>(7), receivedPacket.get<sf::Uint32>(8));
+		c->params.ps.colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(9), receivedPacket.get<sf::Uint32>(10), receivedPacket.get<sf::Uint32>(11), receivedPacket.get<sf::Uint32>(12));
 		break;
 
-	case UPDATE_POS:
+	case PLAYER_POS:
 	{
 		int clientScreenIdx = getScreenIdx(c->id);
 		int targetScreenIdx = clientScreenIdx;
@@ -87,11 +88,11 @@ void onReceive(const Packet& p, Client* c)
 
 		if (clientScreenIdx == -1)
 		{
-			cerr << "UPDATE_POS: Packet sender's screen not found!!" << endl;
+			cerr << "onReceive> " << "PLAYER_POS: Packet sender's screen not found!!" << endl;
 		}
 
-		client->params.ps.emitterPos.x += p.get<float>(0);
-		client->params.ps.emitterPos.y += p.get<float>(1);
+		client->params.ps.emitterPos.x += receivedPacket.get<float>(0);
+		client->params.ps.emitterPos.y += receivedPacket.get<float>(1);
 
 		Cross cross;
 		float xOffset = 0;
@@ -117,16 +118,11 @@ void onReceive(const Packet& p, Client* c)
 		{
 			if (!client->externalScreenOccupancies.empty())
 			{
-				Packet pDeletePlayer;
-
-				pDeletePlayer.mType = DELETE_PLAYER;
-				pDeletePlayer.add(client->id);
-
 				if (client->externalScreenOccupancies.size() > 1)
 				{
 					for (Screen* s : client->externalScreenOccupancies)
 					{
-						if (s != client->screenCurrent) Server::send(pDeletePlayer, s->owner);
+						if (s != client->screenCurrent) Server::send(PacketCreator::Get().PlayerDel(client->id), s->owner);
 					}
 					client->externalScreenOccupancies.clear();
 					client->externalScreenOccupancies.insert(client->screenCurrent);
@@ -136,7 +132,7 @@ void onReceive(const Packet& p, Client* c)
 					if (client->externalScreenOccupancies.find(client->screenCurrent)
 						== client->externalScreenOccupancies.end())
 					{
-						cerr << "UH OH, the client's only external screen occupancy is not their current screen!!" << endl;
+						cerr << "onReceive> " << "PLAYER_POS: The client's one and only external screen occupancy is not their current screen!!" << endl;
 					}
 				}
 			}
@@ -152,27 +148,15 @@ void onReceive(const Packet& p, Client* c)
 					targetScreen)
 					== client->externalScreenOccupancies.end())
 				{
-					Packet pNewPlayer;
-					pNewPlayer.mType = NEW_PLAYER;
-
-					pNewPlayer.add(targetScreen == client->screenOwned ? Client::ID_MYSELF : client->id);
-					pNewPlayer.add((int)cross);
-					pNewPlayer.add(xOffset);
-					pNewPlayer.add(c->params.ps.emitterPos.y / c->screenCurrent->size.y);
-
-					pNewPlayer.add(client->params.name);
-
-					pNewPlayer.add<sf::Uint32>(client->params.ps.colorBegin.r);
-					pNewPlayer.add<sf::Uint32>(client->params.ps.colorBegin.g);
-					pNewPlayer.add<sf::Uint32>(client->params.ps.colorBegin.b);
-					pNewPlayer.add<sf::Uint32>(client->params.ps.colorBegin.a);
-
-					pNewPlayer.add<sf::Uint32>(client->params.ps.colorEnd.r);
-					pNewPlayer.add<sf::Uint32>(client->params.ps.colorEnd.g);
-					pNewPlayer.add<sf::Uint32>(client->params.ps.colorEnd.b);
-					pNewPlayer.add<sf::Uint32>(client->params.ps.colorEnd.a);
-
-					Server::send(pNewPlayer, targetScreen->owner);
+					Server::send(
+						PacketCreator::Get().PlayerNew(
+						targetScreen == client->screenOwned ? Client::ID_MYSELF : client->id,
+						cross,
+						xOffset,
+						c->params.ps.emitterPos.y / c->screenCurrent->size.y,
+						client->params
+						)
+						, targetScreen->owner);
 
 					client->externalScreenOccupancies.insert(targetScreen);
 				}
@@ -193,21 +177,21 @@ void onReceive(const Packet& p, Client* c)
 
 		if (!client->externalScreenOccupancies.empty())
 		{
-			Packet pUpdatePos = p;
+			Packet updatePosPacket = receivedPacket;
 
-			pUpdatePos.mType = UPDATE_POS;
-			pUpdatePos.add(client->id);
+			updatePosPacket.mType = PLAYER_POS;
+			updatePosPacket.add(client->id);
 
 			for (Screen* s : client->externalScreenOccupancies)
 			{
-				Server::send(pUpdatePos, s->owner);
+				Server::send(updatePosPacket, s->owner);
 			}
 		}
 	}
 	break;
 
 	default:
-		cout << "WUT" << endl;
+		cout << "onReceive> " << "Unknown packet received!" << endl;
 	}
 }
 
@@ -221,14 +205,11 @@ void onDisconnect(Client* c)
 		{
 			if (!c->externalScreenOccupancies.empty())
 			{
-				Packet p;
-
-				p.mType = DELETE_PLAYER;
-				p.add(c->id);
+				Packet playerDeletePacket = PacketCreator::Get().PlayerDel(c->id);
 
 				for (Screen* s : c->externalScreenOccupancies)
 				{
-					Server::send(p, s->owner);
+					Server::send(playerDeletePacket, s->owner);
 				}
 			}
 

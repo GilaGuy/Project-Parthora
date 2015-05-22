@@ -22,6 +22,7 @@
 #include "../engine/AppWindow.h"
 #include "../graphics/Fireball.h"
 #include "../GameSettings.h"
+#include "../net/PacketCreator.h"
 
 #include <iostream>
 
@@ -71,16 +72,12 @@ void ParticleSystemPlayground::onload()
 	setControlParticle(false);
 	setControlParticle(isControllingParticle = true);
 
-	Packet p;
-
-	createPlayerInfoPacket(me, p);
-
 	sf::Listener::setPosition(center.x, center.y, -100);
 	bgm.setPosition(center.x, center.y, 0);
 	bgm.setMinDistance(1000);
 	bgm.setLoop(true);
 
-	conn.send(p);
+	conn.send(PacketCreator::Get().PlayerInfo(getWindow().getSize(), getDCPFromPlayer(me)));
 }
 
 void ParticleSystemPlayground::unload()
@@ -120,18 +117,14 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 				me->ps->emitterPos += delta;
 			}
 
-			// send an UPDATE_POS packet to server
-			Packet p;
-			p.mType = UPDATE_POS;
-			p.add(delta.x);
-			p.add(delta.y);
-			conn.send(p);
+			// send a position update packet to server
+			conn.send(PacketCreator::Get().PlayerPos(delta));
 		}
 	}
 	break;
 
 	case sf::Event::MouseWheelMoved:
-		view_main.zoom(1 - event.mouseWheel.delta * 0.0625f);
+		//view_main.zoom(1 - event.mouseWheel.delta * 0.0625f);
 		break;
 
 		/*
@@ -219,9 +212,9 @@ void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 
 	ParticleSystem::TotalParticleCount = 0;
 
-	for (const Packet& p : conn.getPendingPackets())
+	for (const Packet& pendingPacket : conn.getPendingPackets())
 	{
-		onReceive(p);
+		onReceive(pendingPacket);
 	}
 
 	for (Player* player : players)
@@ -282,9 +275,7 @@ void ParticleSystemPlayground::randomizeParticleColors(Player* player)
 	player->ps->colorBegin = sf::Color(rand() & 255, rand() & 255, rand() & 255);
 	player->ps->colorEnd = sf::Color(rand() & 255, rand() & 255, rand() & 255);
 
-	Packet p;
-	createPlayerInfoPacket(player, p);
-	conn.send(p);
+	conn.send(PacketCreator::Get().PlayerInfo(getWindow().getSize(), getDCPFromPlayer(player)));
 }
 
 void ParticleSystemPlayground::setControlParticle(bool arg)
@@ -302,42 +293,16 @@ void ParticleSystemPlayground::setControlParticle(bool arg)
 	}
 }
 
-void ParticleSystemPlayground::createPlayerInfoPacket(const Player* player, Packet& p)
-{
-	p.mType = PLAYER_INFO;
-
-	p.mData.clear();
-
-	p.add(player->label.text().getString().toAnsiString());
-
-	sf::Vector2u size = getWindow().getSize();
-	p.add(size.x);
-	p.add(size.y);
-
-	p.add(player->ps->emitterPos.x);
-	p.add(player->ps->emitterPos.y);
-
-	p.add<sf::Uint32>(player->ps->colorBegin.r);
-	p.add<sf::Uint32>(player->ps->colorBegin.g);
-	p.add<sf::Uint32>(player->ps->colorBegin.b);
-	p.add<sf::Uint32>(player->ps->colorBegin.a);
-
-	p.add<sf::Uint32>(player->ps->colorEnd.r);
-	p.add<sf::Uint32>(player->ps->colorEnd.g);
-	p.add<sf::Uint32>(player->ps->colorEnd.b);
-	p.add<sf::Uint32>(player->ps->colorEnd.a);
-}
-
 Player* ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture)
 {
 	Player* newPlayer = nullptr;
 
 	// check if player already exists
-	for (Player* p : players)
+	for (Player* player : players)
 	{
-		if (p->id == id)
+		if (player->id == id)
 		{
-			newPlayer = p;
+			newPlayer = player;
 			delete newPlayer->ps;
 		}
 	}
@@ -372,40 +337,52 @@ Player* ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, 
 	return newPlayer;
 }
 
-void ParticleSystemPlayground::onReceive(const Packet& p)
+DynamicClientParams ParticleSystemPlayground::getDCPFromPlayer(const Player* player)
+{
+	DynamicClientParams dcp;
+
+	dcp.name = player->label.text().getString().toAnsiString();
+	dcp.ps.colorBegin = player->ps->colorBegin;
+	dcp.ps.colorEnd = player->ps->colorEnd;
+	dcp.ps.emitterPos = player->ps->emitterPos;
+
+	return dcp;
+}
+
+void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 {
 
-	if (p.mType != UPDATE_POS)
-		cout << "recv> " << p.toString() << endl;
+	if (receivedPacket.mType != PLAYER_POS)
+		cout << "onReceive> " << receivedPacket.toString() << endl;
 
 
-	switch (p.mType)
+	switch (receivedPacket.mType)
 	{
-	case NEW_PLAYER:
+	case PLAYER_NEW:
 	{
-		Player* newPlayer = createPlayer(p.get<Client::ID>(0), p.get(4), new Fireball(getWindow(), view_main), particleTexture);
-		Cross crossDir = static_cast<Cross>(p.get<int>(1));
+		Player* newPlayer = createPlayer(receivedPacket.get<Client::ID>(0), receivedPacket.get(4), new Fireball(getWindow(), view_main), particleTexture);
+		Cross crossDir = static_cast<Cross>(receivedPacket.get<int>(1));
 
 		switch (crossDir)
 		{
 		case CROSS_LEFT:
-			newPlayer->ps->emitterPos.x = getWindow().getSize().x + p.get<float>(2);
+			newPlayer->ps->emitterPos.x = getWindow().getSize().x + receivedPacket.get<float>(2);
 			break;
 		case CROSS_RIGHT:
-			newPlayer->ps->emitterPos.x = 0 - p.get<float>(2);
+			newPlayer->ps->emitterPos.x = 0 - receivedPacket.get<float>(2);
 			break;
 		}
 
-		newPlayer->ps->emitterPos.y = p.get<float>(3) * getWindow().getSize().y;
+		newPlayer->ps->emitterPos.y = receivedPacket.get<float>(3) * getWindow().getSize().y;
 
-		newPlayer->ps->colorBegin = sf::Color(p.get<sf::Uint32>(5), p.get<sf::Uint32>(6), p.get<sf::Uint32>(7), p.get<sf::Uint32>(8));
-		newPlayer->ps->colorEnd = sf::Color(p.get<sf::Uint32>(9), p.get<sf::Uint32>(10), p.get<sf::Uint32>(11), p.get<sf::Uint32>(12));
+		newPlayer->ps->colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(5), receivedPacket.get<sf::Uint32>(6), receivedPacket.get<sf::Uint32>(7), receivedPacket.get<sf::Uint32>(8));
+		newPlayer->ps->colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(9), receivedPacket.get<sf::Uint32>(10), receivedPacket.get<sf::Uint32>(11), receivedPacket.get<sf::Uint32>(12));
 	}
 	break;
 
-	case DELETE_PLAYER:
+	case PLAYER_DEL:
 	{
-		Client::ID clientID = p.get<Client::ID>(0);
+		Client::ID clientID = receivedPacket.get<Client::ID>(0);
 
 		for (std::vector<Player*>::iterator it = players.begin(); it != players.end();)
 		{
@@ -415,19 +392,27 @@ void ParticleSystemPlayground::onReceive(const Packet& p)
 				delete (*it);
 
 				it = players.erase(it);
+
+				cout << "onReceive> Player removed! ID: " << clientID << endl;
 				return;
 			}
+			else
+			{
+				++it;
+			}
 		}
+
+		cout << "onReceive> Player to remove not found! ID: " << clientID << endl;
 	}
 	break;
 
-	case UPDATE_POS:
+	case PLAYER_POS:
 		for (Player* player : players)
 		{
-			if (player->id == p.get<Client::ID>(2))
+			if (player->id == receivedPacket.get<Client::ID>(2))
 			{
-				player->ps->emitterPos.x += p.get<float>(0);
-				player->ps->emitterPos.y += p.get<float>(1);
+				player->ps->emitterPos.x += receivedPacket.get<float>(0);
+				player->ps->emitterPos.y += receivedPacket.get<float>(1);
 				return;
 			}
 		}

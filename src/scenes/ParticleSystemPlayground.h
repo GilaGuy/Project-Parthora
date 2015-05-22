@@ -32,8 +32,9 @@ public:
 
 	void setControlParticle(bool arg);
 
-	void createPlayerInfoPacket(const Player* player, Packet& p);
 	Player* createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
+
+	DynamicClientParams getDCPFromPlayer(const Player* player);
 
 	void onReceive(const Packet& p);
 
