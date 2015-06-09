@@ -63,7 +63,7 @@ void ParticleSystemPlayground::onload()
 		cerr << "Failed to connect to the server!" << endl;
 	}
 
-	createPlayer(Client::ID_MYSELF, sf::IpAddress::getLocalAddress().toString(), new Fireball(getWindow(), view_main), particleTexture);
+	createPlayer(Client::MYSELF, sf::IpAddress::getLocalAddress().toString(), new Fireball(getWindow(), view_main), particleTexture);
 
 	me->ps->emitterPos = center;
 	sf::Mouse::setPosition(sf::Vector2i(center), getWindow());
@@ -222,8 +222,9 @@ void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 		player->ps->update(deltaTime);
 	}
 
-	scene_log.text().setString(
-		getWindow().getName() + " by " + getName()
+	std::string log;
+
+	log = getWindow().getName() + " by " + getName()
 		+ "\n"
 		+ "\n"
 		+ "[FPS]: " + std::to_string(getWindow().getFPS())
@@ -233,13 +234,19 @@ void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 		+ "\nSprites   : " + std::to_string(renderer.getSpriteCount())
 		+ "\n"
 		+ "\n[PARTICLES]"
-		+ "\nTotal: " + std::to_string(ParticleSystem::TotalParticleCount)
-		);
+		+ "\nTotal count: " + std::to_string(ParticleSystem::TotalParticleCount)
+		+ "\n";
 
 	for (Player* player : players)
 	{
-		scene_log.text().setString(scene_log.text().getString() + "\n>" + player->label.text().getString() + ": " + std::to_string(player->ps->getParticleCount()));
+		log += "\n>" + player->label.text().getString()
+			//+ "\n c: " + std::to_string(player->ps->getParticleCount())
+			+ "\n x: " + std::to_string(player->ps->emitterPos.x)
+			+ "\n y: " + std::to_string(player->ps->emitterPos.y)
+			+ "\n";
 	}
+
+	scene_log.text().setString(log);
 }
 
 void ParticleSystemPlayground::render()
@@ -293,14 +300,14 @@ void ParticleSystemPlayground::setControlParticle(bool arg)
 	}
 }
 
-Player* ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture)
+Player* ParticleSystemPlayground::createPlayer(ClientID id, std::string name, ParticleSystem* ps, const sf::Texture& texture)
 {
 	Player* newPlayer = nullptr;
 
 	// check if player already exists
 	for (Player* player : players)
 	{
-		if (player->id == id)
+		if (player->params.id == id)
 		{
 			newPlayer = player;
 			delete newPlayer->ps;
@@ -315,7 +322,7 @@ Player* ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, 
 		newPlayer = players.back();
 	}
 
-	newPlayer->id = id;
+	newPlayer->params.id = id;
 
 	newPlayer->ps = ps;
 	newPlayer->ps->setTexture(texture);
@@ -327,7 +334,7 @@ Player* ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, 
 
 	newPlayer->ps->add(newPlayer->label);
 
-	if (id == Client::ID_MYSELF)
+	if (id == Client::MYSELF)
 	{
 		me = newPlayer;
 	}
@@ -337,9 +344,9 @@ Player* ParticleSystemPlayground::createPlayer(Client::ID id, std::string name, 
 	return newPlayer;
 }
 
-DynamicClientParams ParticleSystemPlayground::getDCPFromPlayer(const Player* player)
+ClientParams ParticleSystemPlayground::getDCPFromPlayer(const Player* player)
 {
-	DynamicClientParams dcp;
+	ClientParams dcp;
 
 	dcp.name = player->label.text().getString().toAnsiString();
 	dcp.ps.colorBegin = player->ps->colorBegin;
@@ -360,7 +367,7 @@ void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 	{
 	case PLAYER_NEW:
 	{
-		Player* newPlayer = createPlayer(receivedPacket.get<Client::ID>(0), receivedPacket.get(4), new Fireball(getWindow(), view_main), particleTexture);
+		Player* newPlayer = createPlayer(receivedPacket.get<ClientID>(0), receivedPacket.get(4), new Fireball(getWindow(), view_main), particleTexture);
 		Cross crossDir = static_cast<Cross>(receivedPacket.get<int>(1));
 
 		switch (crossDir)
@@ -382,11 +389,11 @@ void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 
 	case PLAYER_DEL:
 	{
-		Client::ID clientID = receivedPacket.get<Client::ID>(0);
+		ClientID clientID = receivedPacket.get<ClientID>(0);
 
 		for (std::vector<Player*>::iterator it = players.begin(); it != players.end();)
 		{
-			if ((*it)->id == clientID)
+			if ((*it)->params.id == clientID)
 			{
 				delete (*it)->ps;
 				delete (*it);
@@ -409,7 +416,7 @@ void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 	case PLAYER_POS:
 		for (Player* player : players)
 		{
-			if (player->id == receivedPacket.get<Client::ID>(2))
+			if (player->params.id == receivedPacket.get<ClientID>(2))
 			{
 				player->ps->emitterPos.x += receivedPacket.get<float>(0);
 				player->ps->emitterPos.y += receivedPacket.get<float>(1);

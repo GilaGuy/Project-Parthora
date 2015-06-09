@@ -1,3 +1,17 @@
+/**
+* Creates all of the packets needed for communication between the clients and the server.
+*
+* @date       May 21, 2015
+*
+* @revisions
+*
+* @designer   Melvin Loho
+*
+* @programmer Melvin Loho
+*
+* @notes
+*/
+
 #include "PacketCreator.h"
 
 PacketCreator& PacketCreator::Get()
@@ -8,7 +22,7 @@ PacketCreator& PacketCreator::Get()
 
 Packet PacketCreator::PlayerInfo(
 	const sf::Vector2u windowSize,
-	const DynamicClientParams& params)
+	const ClientParams& params)
 {
 	Packet p;
 
@@ -48,11 +62,11 @@ Packet PacketCreator::PlayerPos(const sf::Vector2f pos)
 }
 
 Packet PacketCreator::PlayerNew(
-	const Client::ID clientID,
+	const ClientID clientID,
 	const Cross crossDir,
 	const float offsetX,
 	const float ratioY,
-	const DynamicClientParams& params)
+	const ClientParams& params)
 {
 	Packet p;
 	p.mType = PLAYER_NEW;
@@ -77,7 +91,7 @@ Packet PacketCreator::PlayerNew(
 	return p;
 }
 
-Packet PacketCreator::PlayerDel(const Client::ID clientID)
+Packet PacketCreator::PlayerDel(const ClientID clientID)
 {
 	Packet p;
 

@@ -19,6 +19,13 @@
 #include <SFML/Graphics.hpp>
 #include <set>
 
+// TYPEDEFS --------------------------------------------------------------------
+
+typedef sf::Uint16 ClientID;
+typedef sf::Uint16 ScreenID;
+
+//-----------------------------------------------------------------------------<
+
 // ENUMS -----------------------------------------------------------------------
 
 // Listed in chronological order of a simple scenario in which
@@ -49,8 +56,9 @@ struct ParticleParams
 	sf::Color colorBegin, colorEnd;
 };
 
-struct DynamicClientParams
+struct ClientParams
 {
+	ClientID id;
 	std::string name;
 	ParticleParams ps;
 };
@@ -63,10 +71,9 @@ struct Client;
 
 struct Screen
 {
-	typedef sf::Uint16 ID;
-
-	ID id;
 	Client* owner;
+
+	ScreenID id;
 	sf::Vector2u size;
 	float boundaryLeft, boundaryRight;
 };
@@ -77,16 +84,13 @@ struct Screen
 
 struct Client
 {
+	static const ClientID MYSELF = 0;
+
 	sf::TcpSocket socket;
 
-	typedef sf::Uint16 ID;
-
-	static const ID ID_MYSELF = 0;
-
-	ID id;
 	Screen *screenOwned, *screenCurrent;
 	std::set<Screen*> externalScreenOccupancies;
-	DynamicClientParams params;
+	ClientParams params;
 };
 
 //-----------------------------------------------------------------------------<

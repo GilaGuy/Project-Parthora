@@ -14,21 +14,21 @@ public:
 	Packet PlayerInfo
 		(
 		const sf::Vector2u windowSize,
-		const DynamicClientParams& params
+		const ClientParams& params
 		);
 
 	Packet PlayerPos(const sf::Vector2f pos);
 
 	Packet PlayerNew
 		(
-		const Client::ID clientID,
+		const ClientID clientID,
 		const Cross crossDir,
 		const float offsetX,
 		const float ratioY,
-		const DynamicClientParams& params
+		const ClientParams& params
 		);
 
-	Packet PlayerDel(const Client::ID clientID);
+	Packet PlayerDel(const ClientID clientID);
 
 private:
 	PacketCreator() {}

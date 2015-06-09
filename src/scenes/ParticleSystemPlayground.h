@@ -11,7 +11,7 @@
 
 struct Player
 {
-	Client::ID id;
+	ClientParams params;
 	ParticleSystem* ps;
 	TGO label;
 };
@@ -32,9 +32,9 @@ public:
 
 	void setControlParticle(bool arg);
 
-	Player* createPlayer(Client::ID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
+	Player* createPlayer(ClientID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
 
-	DynamicClientParams getDCPFromPlayer(const Player* player);
+	ClientParams getDCPFromPlayer(const Player* player);
 
 	void onReceive(const Packet& p);
 
