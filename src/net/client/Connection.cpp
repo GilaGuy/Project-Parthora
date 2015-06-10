@@ -67,7 +67,7 @@ void Connection::send(const Packet& p)
 
 	socket.send(toSend.c_str(), length);
 
-	if (p.mType != PLAYER_POS)
+	if (p.mType != PLAYER_MOVE)
 		std::cout << "sent> " << toSend << std::endl;
 }
 

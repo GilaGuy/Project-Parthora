@@ -34,7 +34,7 @@ public:
 
 	Player* createPlayer(ClientID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
 
-	ClientParams getDCPFromPlayer(const Player* player);
+	ClientParams getClientParams(const Player* player);
 
 	void onReceive(const Packet& p);
 
@@ -47,6 +47,8 @@ private:
 
 	Player* me;
 	std::vector<Player*> players;
+
+	Screen myScreen;
 
 	sf::Texture particleTexture;
 	sf::Music bgm;

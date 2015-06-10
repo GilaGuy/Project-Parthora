@@ -63,7 +63,7 @@ void onConnect(Client* c)
 void onReceive(const Packet& receivedPacket, Client* c)
 {
 
-	if (receivedPacket.mType != PLAYER_POS)
+	if (receivedPacket.mType != PLAYER_MOVE)
 		cout << "onReceive> " << receivedPacket.toString() << endl;
 
 
@@ -81,41 +81,24 @@ void onReceive(const Packet& receivedPacket, Client* c)
 		c->params.ps.colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(9), receivedPacket.get<sf::Uint32>(10), receivedPacket.get<sf::Uint32>(11), receivedPacket.get<sf::Uint32>(12));
 		break;
 
-	case PLAYER_POS:
+	case PLAYER_MOVE:
 	{
 		int clientScreenIdx = getScreenIdx(c->params.id);
 		int targetScreenIdx = clientScreenIdx;
 		Client* client = screens.at(clientScreenIdx)->owner; // the client that's crossing screens
+		Cross cross;
 
 		if (clientScreenIdx == -1)
 		{
-			cerr << "onReceive> " << "PLAYER_POS: Packet sender's screen not found!!" << endl;
+			cerr << "onReceive> " << "PLAYER_MOVE: Packet sender's screen not found!!" << endl;
 		}
 
 		client->params.ps.emitterPos.x += receivedPacket.get<float>(0);
 		client->params.ps.emitterPos.y += receivedPacket.get<float>(1);
 
-		Cross cross;
-		float xOffset = 0;
+		cross = checkBeyondBoundaries(client->params.ps.emitterPos, *client->screenCurrent);
 
-		if (client->params.ps.emitterPos.x < client->screenCurrent->boundaryLeft)
-		{
-			cross = CROSS_LEFT;
-			xOffset = 0 + client->params.ps.emitterPos.x;
-			--targetScreenIdx;
-		}
-		else if (client->params.ps.emitterPos.x > client->screenCurrent->boundaryRight)
-		{
-			cross = CROSS_RIGHT;
-			xOffset = client->screenCurrent->size.x - client->params.ps.emitterPos.x;
-			++targetScreenIdx;
-		}
-		else
-		{
-			cross = NO_CROSS;
-		}
-
-		if (cross == NO_CROSS) // within boundaries
+		if (cross == NO_CROSS) //>> if within boundaries
 		{
 			if (!client->externalScreenOccupancies.empty())
 			{
@@ -133,13 +116,28 @@ void onReceive(const Packet& receivedPacket, Client* c)
 					if (client->externalScreenOccupancies.find(client->screenCurrent)
 						== client->externalScreenOccupancies.end())
 					{
-						cerr << "onReceive> " << "PLAYER_POS: The client's one and only external screen occupancy is not their current screen!!" << endl;
+						cerr << "onReceive> " << "PLAYER_MOVE: The client's one and only external screen occupancy is not their current screen!!" << endl;
 					}
 				}
 			}
 		}
-		else // beyond boundaries
+		else //>> if beyond boundaries
 		{
+			float xOffset = 0;
+
+			switch (cross)
+			{
+			case CROSS_LEFT:
+				xOffset = 0 + client->params.ps.emitterPos.x;
+				--targetScreenIdx;
+				break;
+
+			case CROSS_RIGHT:
+				xOffset = client->screenCurrent->size.x - client->params.ps.emitterPos.x;
+				++targetScreenIdx;
+				break;
+			}
+
 			if (targetScreenIdx >= 0 && targetScreenIdx < screens.size())
 			{
 				Screen* targetScreen = screens.at(targetScreenIdx);
@@ -147,7 +145,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 				if (find(client->externalScreenOccupancies.begin(),
 					client->externalScreenOccupancies.end(),
 					targetScreen)
-					== client->externalScreenOccupancies.end())
+					== client->externalScreenOccupancies.end()) // if the target screen is not an ESO yet
 				{
 					Server::send(
 						PacketCreator::Get().PlayerNew(
@@ -162,16 +160,39 @@ void onReceive(const Packet& receivedPacket, Client* c)
 					client->externalScreenOccupancies.insert(targetScreen);
 				}
 
-				// beyond screen
-				if (client->params.ps.emitterPos.x < 0)
+				cross = checkBeyondScreens(client->params.ps.emitterPos, *client->screenCurrent);
+
+				//>> if beyond screen
+				if (cross != NO_CROSS)
 				{
-					client->params.ps.emitterPos.x = client->screenCurrent->size.x - client->params.ps.emitterPos.x;
+					switch (cross)
+					{
+					case CROSS_LEFT:
+						client->params.ps.emitterPos.x = client->screenCurrent->size.x - client->params.ps.emitterPos.x;
+						break;
+
+					case CROSS_RIGHT:
+						client->params.ps.emitterPos.x = client->params.ps.emitterPos.x - client->screenCurrent->size.x;
+						break;
+					}
+
 					client->screenCurrent = targetScreen;
-				}
-				else if (client->params.ps.emitterPos.x > client->screenCurrent->size.x)
-				{
-					client->params.ps.emitterPos.x = client->params.ps.emitterPos.x - client->screenCurrent->size.x;
-					client->screenCurrent = targetScreen;
+
+					/*
+					// the target screen is now our current screen, so we remove it from our list of ESO
+					for (screen_iterator_set it = client->externalScreenOccupancies.begin();
+					it != client->externalScreenOccupancies.end();)
+					{
+					if (*it == targetScreen)
+					{
+					it = client->externalScreenOccupancies.erase(it);
+					}
+					else
+					{
+					++it;
+					}
+					}
+					*/
 				}
 			}
 		}
@@ -180,7 +201,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 		{
 			Packet updatePosPacket = receivedPacket;
 
-			updatePosPacket.mType = PLAYER_POS;
+			updatePosPacket.mType = PLAYER_MOVE;
 			updatePosPacket.add(client->params.id);
 
 			for (Screen* s : client->externalScreenOccupancies)

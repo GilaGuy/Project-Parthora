@@ -25,7 +25,7 @@ void Server::send(Packet p, Client* c)
 
 	c->socket.send(toSend.c_str(), length);
 
-	if (p.mType != PLAYER_POS)
+	if (p.mType != PLAYER_MOVE)
 		std::cout << "sent> " << toSend << std::endl;
 }
 

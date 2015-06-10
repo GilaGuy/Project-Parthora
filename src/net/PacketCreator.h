@@ -4,8 +4,6 @@
 #include "Protocol.h"
 #include "Packet.h"
 
-struct Player;
-
 class PacketCreator
 {
 public:
@@ -13,11 +11,11 @@ public:
 
 	Packet PlayerInfo
 		(
-		const sf::Vector2u windowSize,
-		const ClientParams& params
+		const ClientParams& playerParams,
+		const Screen& playerScreen
 		);
 
-	Packet PlayerPos(const sf::Vector2f pos);
+	Packet PlayerMove(const sf::Vector2f delta);
 
 	Packet PlayerNew
 		(

@@ -77,7 +77,8 @@ void ParticleSystemPlayground::onload()
 	bgm.setMinDistance(1000);
 	bgm.setLoop(true);
 
-	conn.send(PacketCreator::Get().PlayerInfo(getWindow().getSize(), getDCPFromPlayer(me)));
+	myScreen.size = getWindow().getSize();
+	conn.send(PacketCreator::Get().PlayerInfo(getClientParams(me), myScreen));
 }
 
 void ParticleSystemPlayground::unload()
@@ -112,13 +113,16 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 			sf::Mouse::setPosition(sf::Vector2i(view_main.getCenter()), getWindow());
 			getWindow().pollEvent(dummyEvent);
 
-			if (me != nullptr)
+			if (me)
 			{
 				me->ps->emitterPos += delta;
 			}
 
-			// send a position update packet to server
-			conn.send(PacketCreator::Get().PlayerPos(delta));
+			// send a position update packet to server if needed
+			if (!(me && checkBeyondBoundaries(me->ps->emitterPos, myScreen) == NO_CROSS))
+			{
+				conn.send(PacketCreator::Get().PlayerMove(delta));
+			}
 		}
 	}
 	break;
@@ -282,7 +286,7 @@ void ParticleSystemPlayground::randomizeParticleColors(Player* player)
 	player->ps->colorBegin = sf::Color(rand() & 255, rand() & 255, rand() & 255);
 	player->ps->colorEnd = sf::Color(rand() & 255, rand() & 255, rand() & 255);
 
-	conn.send(PacketCreator::Get().PlayerInfo(getWindow().getSize(), getDCPFromPlayer(player)));
+	conn.send(PacketCreator::Get().PlayerInfo(getClientParams(player), myScreen));
 }
 
 void ParticleSystemPlayground::setControlParticle(bool arg)
@@ -344,7 +348,7 @@ Player* ParticleSystemPlayground::createPlayer(ClientID id, std::string name, Pa
 	return newPlayer;
 }
 
-ClientParams ParticleSystemPlayground::getDCPFromPlayer(const Player* player)
+ClientParams ParticleSystemPlayground::getClientParams(const Player* player)
 {
 	ClientParams dcp;
 
@@ -359,7 +363,7 @@ ClientParams ParticleSystemPlayground::getDCPFromPlayer(const Player* player)
 void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 {
 
-	if (receivedPacket.mType != PLAYER_POS)
+	if (receivedPacket.mType != PLAYER_MOVE)
 		cout << "onReceive> " << receivedPacket.toString() << endl;
 
 
@@ -413,7 +417,7 @@ void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 	}
 	break;
 
-	case PLAYER_POS:
+	case PLAYER_MOVE:
 		for (Player* player : players)
 		{
 			if (player->params.id == receivedPacket.get<ClientID>(2))

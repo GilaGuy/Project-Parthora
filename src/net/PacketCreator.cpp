@@ -21,42 +21,42 @@ PacketCreator& PacketCreator::Get()
 }
 
 Packet PacketCreator::PlayerInfo(
-	const sf::Vector2u windowSize,
-	const ClientParams& params)
+	const ClientParams& playerParams,
+	const Screen& playerScreen)
 {
 	Packet p;
 
 	p.mType = PLAYER_INFO;
 
-	p.add(params.name);
+	p.add(playerParams.name);
 
-	p.add(windowSize.x);
-	p.add(windowSize.y);
+	p.add(playerScreen.size.x);
+	p.add(playerScreen.size.y);
 
-	p.add(params.ps.emitterPos.x);
-	p.add(params.ps.emitterPos.y);
+	p.add(playerParams.ps.emitterPos.x);
+	p.add(playerParams.ps.emitterPos.y);
 
-	p.add<sf::Uint32>(params.ps.colorBegin.r);
-	p.add<sf::Uint32>(params.ps.colorBegin.g);
-	p.add<sf::Uint32>(params.ps.colorBegin.b);
-	p.add<sf::Uint32>(params.ps.colorBegin.a);
+	p.add<sf::Uint32>(playerParams.ps.colorBegin.r);
+	p.add<sf::Uint32>(playerParams.ps.colorBegin.g);
+	p.add<sf::Uint32>(playerParams.ps.colorBegin.b);
+	p.add<sf::Uint32>(playerParams.ps.colorBegin.a);
 
-	p.add<sf::Uint32>(params.ps.colorEnd.r);
-	p.add<sf::Uint32>(params.ps.colorEnd.g);
-	p.add<sf::Uint32>(params.ps.colorEnd.b);
-	p.add<sf::Uint32>(params.ps.colorEnd.a);
+	p.add<sf::Uint32>(playerParams.ps.colorEnd.r);
+	p.add<sf::Uint32>(playerParams.ps.colorEnd.g);
+	p.add<sf::Uint32>(playerParams.ps.colorEnd.b);
+	p.add<sf::Uint32>(playerParams.ps.colorEnd.a);
 
 	return p;
 }
 
-Packet PacketCreator::PlayerPos(const sf::Vector2f pos)
+Packet PacketCreator::PlayerMove(const sf::Vector2f delta)
 {
 	Packet p;
 
-	p.mType = PLAYER_POS;
+	p.mType = PLAYER_MOVE;
 
-	p.add(pos.x);
-	p.add(pos.y);
+	p.add(delta.x);
+	p.add(delta.y);
 
 	return p;
 }

@@ -1,17 +1,3 @@
-/**
- * Protocol specifications.
- *
- * @date       April 18, 2015
- *
- * @revisions
- *
- * @designer   Melvin Loho
- *
- * @programmer Melvin Loho
- *
- * @notes      This file contains all of the common things that will be used by the server and client.
- */
-
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
@@ -34,7 +20,7 @@ enum PacketType
 {
 	NO_MT,
 	PLAYER_INFO,
-	PLAYER_POS,
+	PLAYER_MOVE,
 	PLAYER_NEW,
 	PLAYER_DEL
 };
@@ -65,7 +51,7 @@ struct ClientParams
 
 //-----------------------------------------------------------------------------<
 
-// SCREEN ----------------------------------------------------------------------
+// STRUCTS ---------------------------------------------------------------------
 
 struct Client;
 
@@ -78,10 +64,6 @@ struct Screen
 	float boundaryLeft, boundaryRight;
 };
 
-//-----------------------------------------------------------------------------<
-
-// CLIENT ----------------------------------------------------------------------
-
 struct Client
 {
 	static const ClientID MYSELF = 0;
@@ -92,6 +74,13 @@ struct Client
 	std::set<Screen*> externalScreenOccupancies;
 	ClientParams params;
 };
+
+//-----------------------------------------------------------------------------<
+
+// HELPER FUNCTIONS ------------------------------------------------------------
+
+Cross checkBeyondBoundaries(sf::Vector2f coords, const Screen& s);
+Cross checkBeyondScreens(sf::Vector2f coords, const Screen& s);
 
 //-----------------------------------------------------------------------------<
 
