@@ -28,6 +28,11 @@ struct Packet
 		return mData.at(pos);
 	}
 
+	inline size_t getDataSize() const
+	{
+		return mData.size();
+	}
+
 	template < class T >
 	void add(T t)
 	{
@@ -43,6 +48,21 @@ struct Packet
 	inline void add(std::string str)
 	{
 		mData.push_back(str);
+	}
+
+	inline std::string rem(size_t idx)
+	{
+		mData.erase(mData.begin() + idx);
+	}
+
+	inline void remLast()
+	{
+		mData.pop_back();
+	}
+
+	inline void replace(size_t idx, std::string newstr)
+	{
+		mData.at(idx) = newstr;
 	}
 
 	bool decode(const char* raw, size_t numOfBytes);

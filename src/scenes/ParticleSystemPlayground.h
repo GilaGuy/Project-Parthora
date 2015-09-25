@@ -36,7 +36,9 @@ public:
 
 	ClientParams getClientParams(const Player* player);
 
+	void onConnect();
 	void onReceive(const Packet& p);
+	void onDisconnect();
 
 private:
 	sf::View view_hud, view_main;

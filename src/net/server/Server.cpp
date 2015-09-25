@@ -30,12 +30,12 @@ void Server::send(Packet p, Client* c)
 }
 
 Server::Server() :
-is_running(false),
-thread_running(false),
-serverThread(&Server::receiveThread, this),
-callbackOnConnect(nullptr),
-callbackOnReceive(nullptr),
-callbackOnDisconnect(nullptr)
+	is_running(false),
+	thread_running(false),
+	serverThread(&Server::receiveThread, this),
+	callbackOnConnect(nullptr),
+	callbackOnReceive(nullptr),
+	callbackOnDisconnect(nullptr)
 {}
 
 Server::~Server()

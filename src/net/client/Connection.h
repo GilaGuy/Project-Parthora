@@ -12,7 +12,9 @@ public:
 	Connection();
 	~Connection();
 
+	void setConnectHandler(std::function<void()> onConnect);
 	void setReceiveHandler(std::function<void(const Packet&)> onReceive);
+	void setDisconnectHandler(std::function<void()> onDisconnect);
 	std::vector<Packet> getPendingPackets();
 
 	bool start(std::string serverIP, unsigned short port);
@@ -26,9 +28,12 @@ private:
 	sf::TcpSocket socket;
 	sf::Thread clientThread;
 
+	std::function<void()> callbackOnConnect;
 	std::function<void(const Packet&)> callbackOnReceive;
+	std::function<void()> callbackOnDisconnect;
+
 	std::vector<Packet> pendingPackets;
-	std::mutex mutex_pendingPackets;
+	std::mutex mutexPendingPackets;
 
 	bool isConnected;
 };

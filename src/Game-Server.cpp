@@ -63,8 +63,8 @@ void onConnect(Client* c)
 void onReceive(const Packet& receivedPacket, Client* c)
 {
 
-	if (receivedPacket.mType != PLAYER_MOVE)
-		cout << "onReceive> " << receivedPacket.toString() << endl;
+	//if (receivedPacket.mType != PLAYER_MOVE)
+	cout << "R> " << receivedPacket.toString() << endl;
 
 
 	switch (receivedPacket.mType)
@@ -79,6 +79,8 @@ void onReceive(const Packet& receivedPacket, Client* c)
 		c->screenOwned->boundaryRight = c->screenOwned->size.x - c->screenOwned->boundaryLeft;
 		c->params.ps.colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(5), receivedPacket.get<sf::Uint32>(6), receivedPacket.get<sf::Uint32>(7), receivedPacket.get<sf::Uint32>(8));
 		c->params.ps.colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(9), receivedPacket.get<sf::Uint32>(10), receivedPacket.get<sf::Uint32>(11), receivedPacket.get<sf::Uint32>(12));
+
+		// reflect packet to c's ESO
 		break;
 
 	case PLAYER_MOVE:
@@ -90,7 +92,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 
 		if (clientScreenIdx == -1)
 		{
-			cerr << "onReceive> " << "PLAYER_MOVE: Packet sender's screen not found!!" << endl;
+			cerr << "R> " << "PLAYER_MOVE: Packet sender's screen not found!!" << endl;
 		}
 
 		client->params.ps.emitterPos.x += receivedPacket.get<float>(0);
@@ -116,7 +118,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 					if (client->externalScreenOccupancies.find(client->screenCurrent)
 						== client->externalScreenOccupancies.end())
 					{
-						cerr << "onReceive> " << "PLAYER_MOVE: The client's one and only external screen occupancy is not their current screen!!" << endl;
+						cerr << "R> " << "PLAYER_MOVE: The client's one and only external screen occupancy is not their current screen!!" << endl;
 					}
 				}
 			}
@@ -149,12 +151,12 @@ void onReceive(const Packet& receivedPacket, Client* c)
 				{
 					Server::send(
 						PacketCreator::Get().PlayerNew(
-						targetScreen == client->screenOwned ? Client::MYSELF : client->params.id,
-						cross,
-						xOffset,
-						c->params.ps.emitterPos.y / c->screenCurrent->size.y,
-						client->params
-						)
+							targetScreen == client->screenOwned ? Client::MYSELF : client->params.id,
+							cross,
+							xOffset,
+							c->params.ps.emitterPos.y / c->screenCurrent->size.y,
+							client->params
+							)
 						, targetScreen->owner);
 
 					client->externalScreenOccupancies.insert(targetScreen);
@@ -197,23 +199,24 @@ void onReceive(const Packet& receivedPacket, Client* c)
 			}
 		}
 
-		if (!client->externalScreenOccupancies.empty())
+		Packet updatePosPacket = receivedPacket;
+
+		updatePosPacket.mType = PLAYER_MOVE;
+		updatePosPacket.add(client->params.id);
+
+		for (Screen* s : client->externalScreenOccupancies)
 		{
-			Packet updatePosPacket = receivedPacket;
-
-			updatePosPacket.mType = PLAYER_MOVE;
-			updatePosPacket.add(client->params.id);
-
-			for (Screen* s : client->externalScreenOccupancies)
-			{
-				Server::send(updatePosPacket, s->owner);
-			}
+			Server::send(updatePosPacket, s->owner);
 		}
+
+		updatePosPacket.remLast();
+		updatePosPacket.add(0);
+		Server::send(updatePosPacket, c);
 	}
 	break;
 
 	default:
-		cout << "onReceive> " << "Unknown packet received!" << endl;
+		cout << "R> " << "Unknown packet received!" << endl;
 	}
 }
 
@@ -240,7 +243,7 @@ void onDisconnect(Client* c)
 				if (!availableScreen->owner->externalScreenOccupancies.empty())
 				{
 					for (screen_iterator_set it = availableScreen->owner->externalScreenOccupancies.begin();
-						it != availableScreen->owner->externalScreenOccupancies.end();)
+					it != availableScreen->owner->externalScreenOccupancies.end();)
 					{
 						if (*it == c->screenOwned /*disconnected client's screen*/)
 						{

@@ -17,27 +17,37 @@
 #include <iostream>
 
 Connection::Connection() :
-isConnected(false),
-clientThread(&Connection::receiveThread, this),
-callbackOnReceive(nullptr)
+	isConnected(false),
+	clientThread(&Connection::receiveThread, this),
+	callbackOnReceive(nullptr)
 {}
 
 Connection::~Connection()
 {}
+
+void Connection::setConnectHandler(std::function<void()> onConnect)
+{
+	callbackOnConnect = onConnect;
+}
 
 void Connection::setReceiveHandler(std::function<void(const Packet&)> onReceive)
 {
 	callbackOnReceive = onReceive;
 }
 
+void Connection::setDisconnectHandler(std::function<void()> onDisconnect)
+{
+	callbackOnDisconnect = onDisconnect;
+}
+
 std::vector<Packet> Connection::getPendingPackets()
 {
-	mutex_pendingPackets.lock();
+	mutexPendingPackets.lock();
 
 	std::vector<Packet> copyOfPendingPackets = pendingPackets;
 	pendingPackets.clear();
 
-	mutex_pendingPackets.unlock();
+	mutexPendingPackets.unlock();
 
 	return copyOfPendingPackets;
 }
@@ -75,6 +85,8 @@ void Connection::receiveThread()
 {
 	isConnected = true;
 
+	if (callbackOnConnect != nullptr) callbackOnConnect();
+
 	while (isConnected)
 	{
 		char buffer[Packet::MAX_SIZE]; Packet p;
@@ -86,11 +98,11 @@ void Connection::receiveThread()
 
 			if (callbackOnReceive == nullptr)
 			{
-				mutex_pendingPackets.lock();
+				mutexPendingPackets.lock();
 
 				pendingPackets.push_back(p);
 
-				mutex_pendingPackets.unlock();
+				mutexPendingPackets.unlock();
 			}
 			else
 			{
@@ -103,4 +115,6 @@ void Connection::receiveThread()
 			break;
 		}
 	}
+
+	if (callbackOnDisconnect != nullptr) callbackOnDisconnect();
 }

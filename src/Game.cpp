@@ -45,10 +45,10 @@ int main(int argc, char const *argv[])
 
 	window.create
 		(
-		"Project Parthora",
-		800, 450, true
-		//,sf::Style::Fullscreen
-		);
+			"Project Parthora",
+			800, 450, true
+			//,sf::Style::Fullscreen
+			);
 
 	window.setScene(Scene::Create<ParticleSystemPlayground>(window), false);
 
