@@ -24,6 +24,7 @@ public:
 
 	void onload() override;
 	void unload() override;
+	void updateViews() override;
 	void handleEvent(const sf::Event &event) override;
 	void update(const sf::Time &deltaTime) override;
 	void render() override;

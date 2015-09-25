@@ -28,6 +28,14 @@ public:
 	virtual void onload();
 	virtual void unload();
 
+	/////
+	/// Overridable to update any views that are owned by the Scene.
+	/// Examples:
+	/// - when toggling between windowed and fullscreen modes
+	/// - when the window is resized
+	/////
+	virtual void updateViews();
+
 	virtual void handleEvent(const sf::Event &event);
 
 	/////

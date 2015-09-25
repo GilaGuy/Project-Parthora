@@ -93,6 +93,13 @@ void ParticleSystemPlayground::unload()
 	conn.stop();
 }
 
+void ParticleSystemPlayground::updateViews()
+{
+	view_hud = getWindow().getCurrentView();
+	view_main.setSize(view_hud.getSize());
+	view_main.setCenter(getWindow().getSize().x * 0.5f, getWindow().getSize().y * 0.5f);
+}
+
 void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 {
 	Scene::handleEvent(event);
@@ -193,20 +200,13 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 		break;
 
 	case sf::Event::Resized:
-		view_hud = getWindow().getCurrentView();
-		view_main.setSize(view_hud.getSize());
-		view_main.setCenter(getWindow().getSize().x * 0.5f, getWindow().getSize().y * 0.5f);
-
-		getWindow().setMousePositionRelativeToWindowAndView(view_main.getCenter(), view_main);
-		getWindow().pollEvent(dummyEvent);
+		updateViews();
 		break;
 	}
 }
 
 void ParticleSystemPlayground::update(const sf::Time &deltaTime)
 {
-	//view_main.move(view_main_offset);
-
 	ParticleSystem::TotalParticleCount = 0;
 
 	for (const Packet& pendingPacket : conn.getPendingPackets())

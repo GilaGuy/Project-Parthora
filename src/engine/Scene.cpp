@@ -22,9 +22,9 @@
 Scene::ID Scene::SCENE_ID = 0;
 
 Scene::Scene(AppWindow &window, const std::string &name) :
-m_window(window),
-m_id(++SCENE_ID),
-m_sceneName(name)
+	m_window(window),
+	m_id(++SCENE_ID),
+	m_sceneName(name)
 {
 	//std::cout << "Constructed: " << "Scene" << "[" << getID() << "] \"" << getName() << "\"" << std::endl;
 
@@ -60,6 +60,9 @@ void Scene::onload()
 void Scene::unload()
 {}
 
+void Scene::updateViews()
+{}
+
 void Scene::handleEvent(const sf::Event &event)
 {
 	sf::Keyboard::Key k = event.key.code;
@@ -73,9 +76,8 @@ void Scene::handleEvent(const sf::Event &event)
 	case sf::Event::KeyReleased:
 		if (k == AppWindow::KEY_FULLSCREEN)
 		{
-			unload();
 			getWindow().toggleFullScreen();
-			onload();
+			updateViews();
 		}
 		else if (k == AppWindow::KEY_SCREENSHOT)
 		{
