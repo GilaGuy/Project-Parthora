@@ -8,20 +8,13 @@
 #include "../engine/Scene.h"
 #include "../effect/ParticleSystem.h"
 #include "../net/client/Connection.h"
+#include "../entities/Player.h"
 
-struct Player
-{
-	ClientID id;
-	ClientParams params;
-	ParticleSystem* ps;
-	TGO label;
-};
-
-class ParticleSystemPlayground : public Scene
+class GameScene : public Scene
 {
 public:
-	ParticleSystemPlayground(AppWindow &window);
-	~ParticleSystemPlayground();
+	GameScene(AppWindow &window);
+	~GameScene();
 
 	void onload() override;
 	void unload() override;
@@ -31,10 +24,6 @@ public:
 	void render() override;
 
 	void setControlParticle(bool arg);
-
-	Player* createPlayer(ClientID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
-	void setPlayerName(Player* player, std::string name);
-	void syncPPwithPS(ParticleParams& pp, const ParticleSystem& ps);
 
 	void randomizeParticleColors(Player* player);
 
@@ -50,7 +39,6 @@ private:
 	bool isControllingParticle;
 
 	Player* me;
-	std::vector<Player*> players;
 
 	Screen myScreen;
 

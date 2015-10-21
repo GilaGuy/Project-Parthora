@@ -17,7 +17,7 @@
 #include "engine/Scene.h"
 #include "GameSettings.h"
 
-#include "scenes/ParticleSystemPlayground.h"
+#include "scenes/GameScene.h"
 
 #include <iostream>
 
@@ -50,7 +50,7 @@ int main(int argc, char const *argv[])
 			//,sf::Style::Fullscreen
 			);
 
-	window.setScene(Scene::Create<ParticleSystemPlayground>(window), false);
+	window.setScene(Scene::Create<GameScene>(window), false);
 
 	window.run();
 
