@@ -50,9 +50,11 @@ ParticleSystemPlayground::~ParticleSystemPlayground()
 
 void ParticleSystemPlayground::onload()
 {
+	// initialize views
+
 	view_hud = view_main = getWindow().getCurrentView();
 
-	sf::Vector2f center = view_main.getCenter();
+	// establish connection
 
 	cout << "Connecting to..." << GameSettings::toString() << endl;
 
@@ -61,24 +63,33 @@ void ParticleSystemPlayground::onload()
 		cerr << "Failed to connect to the server!" << endl;
 	}
 
+	// create player and sync parameters
+
 	createPlayer(Client::MYSELF, sf::IpAddress::getLocalAddress().toString(), new Fireball(getWindow(), view_main), particleTexture);
 	syncPPwithPS(me->params.pp, *me->ps);
+
+	// center mouse and uncontrol the particle
+
+	sf::Vector2f center = view_main.getCenter();
 
 	sf::Mouse::setPosition(sf::Vector2i(center), getWindow());
 	getWindow().pollEvent(dummyEvent);
 
 	setControlParticle(isControllingParticle = false);
 
+	// music settings
+
 	sf::Listener::setPosition(center.x, center.y, -100);
 	bgm.setPosition(center.x, center.y, 0);
 	bgm.setMinDistance(1000);
 	bgm.setLoop(true);
 
-	myScreen.size = getWindow().getSize();
-	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, me->params, myScreen));
+	// update views, send the playerinfo packet to the server, and center the player
+
+	updateViews();
 	conn.send(PacketCreator::Get().PlayerMove(center));
 
-	// reset my name to indicate no connection
+	// reset my name to indicate no player info update yet
 	setPlayerName(me, "UNCONNECTED");
 }
 
@@ -102,6 +113,10 @@ void ParticleSystemPlayground::updateViews()
 	view_hud = getWindow().getCurrentView();
 	view_main.setSize(view_hud.getSize());
 	view_main.setCenter(getWindow().getSize().x * 0.5f, getWindow().getSize().y * 0.5f);
+
+	myScreen.size = getWindow().getSize();
+
+	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, me->params, myScreen));
 }
 
 void ParticleSystemPlayground::handleEvent(const sf::Event &event)
