@@ -11,20 +11,21 @@ public:
 
 	Packet PlayerInfo
 		(
-		const ClientParams& playerParams,
-		const Screen& playerScreen
-		);
+			const ClientID clientID,
+			const ClientParams& params,
+			const Screen& playerScreen
+			);
 
 	Packet PlayerMove(const sf::Vector2f delta);
 
 	Packet PlayerNew
 		(
-		const ClientID clientID,
-		const Cross crossDir,
-		const float offsetX,
-		const float ratioY,
-		const ClientParams& params
-		);
+			const ClientID clientID,
+			const Cross crossDir,
+			const float offsetX,
+			const float ratioY,
+			const ClientParams& params
+			);
 
 	Packet PlayerDel(const ClientID clientID);
 

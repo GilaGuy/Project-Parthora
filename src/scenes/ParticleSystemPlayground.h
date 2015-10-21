@@ -11,6 +11,7 @@
 
 struct Player
 {
+	ClientID id;
 	ClientParams params;
 	ParticleSystem* ps;
 	TGO label;
@@ -29,13 +30,13 @@ public:
 	void update(const sf::Time &deltaTime) override;
 	void render() override;
 
-	void randomizeParticleColors(Player* player);
-
 	void setControlParticle(bool arg);
 
 	Player* createPlayer(ClientID id, std::string name, ParticleSystem* ps, const sf::Texture& texture);
+	void setPlayerName(Player* player, std::string name);
+	void syncPPwithPS(ParticleParams& pp, const ParticleSystem& ps);
 
-	ClientParams getClientParams(const Player* player);
+	void randomizeParticleColors(Player* player);
 
 	void onConnect();
 	void onReceive(const Packet& p);

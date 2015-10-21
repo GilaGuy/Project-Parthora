@@ -38,15 +38,14 @@ enum Cross
 
 struct ParticleParams
 {
-	sf::Vector2f emitterPos;
 	sf::Color colorBegin, colorEnd;
 };
 
 struct ClientParams
 {
-	ClientID id;
 	std::string name;
-	ParticleParams ps;
+	sf::Vector2f emitterPos;
+	ParticleParams pp;
 };
 
 //-----------------------------------------------------------------------------<
@@ -72,6 +71,8 @@ struct Client
 
 	Screen *screenOwned, *screenCurrent;
 	std::set<Screen*> externalScreenOccupancies;
+
+	ClientID id;
 	ClientParams params;
 };
 

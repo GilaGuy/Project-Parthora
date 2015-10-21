@@ -21,30 +21,21 @@ PacketCreator& PacketCreator::Get()
 }
 
 Packet PacketCreator::PlayerInfo(
-	const ClientParams& playerParams,
+	const ClientID clientID,
+	const ClientParams& params,
 	const Screen& playerScreen)
 {
 	Packet p;
-
 	p.mType = PLAYER_INFO;
 
-	p.add(playerParams.name);
+	p.add(clientID); //0
 
-	p.add(playerScreen.size.x);
-	p.add(playerScreen.size.y);
+	p.add(params.name); //1
+	p.add(params.pp.colorBegin.toInteger()); //2
+	p.add(params.pp.colorEnd.toInteger()); //3
 
-	p.add(playerParams.ps.emitterPos.x);
-	p.add(playerParams.ps.emitterPos.y);
-
-	p.add<sf::Uint32>(playerParams.ps.colorBegin.r);
-	p.add<sf::Uint32>(playerParams.ps.colorBegin.g);
-	p.add<sf::Uint32>(playerParams.ps.colorBegin.b);
-	p.add<sf::Uint32>(playerParams.ps.colorBegin.a);
-
-	p.add<sf::Uint32>(playerParams.ps.colorEnd.r);
-	p.add<sf::Uint32>(playerParams.ps.colorEnd.g);
-	p.add<sf::Uint32>(playerParams.ps.colorEnd.b);
-	p.add<sf::Uint32>(playerParams.ps.colorEnd.a);
+	p.add(playerScreen.size.x); //4
+	p.add(playerScreen.size.y); //5
 
 	return p;
 }
@@ -52,7 +43,6 @@ Packet PacketCreator::PlayerInfo(
 Packet PacketCreator::PlayerMove(const sf::Vector2f delta)
 {
 	Packet p;
-
 	p.mType = PLAYER_MOVE;
 
 	p.add(delta.x);
@@ -71,22 +61,15 @@ Packet PacketCreator::PlayerNew(
 	Packet p;
 	p.mType = PLAYER_NEW;
 
-	p.add(clientID);
-	p.add(static_cast<int>(crossDir));
-	p.add(offsetX);
-	p.add(ratioY);
+	p.add(clientID); //0
 
-	p.add(params.name);
+	p.add(static_cast<int>(crossDir)); //1
+	p.add(offsetX); //2
+	p.add(ratioY); //3
 
-	p.add<sf::Uint32>(params.ps.colorBegin.r);
-	p.add<sf::Uint32>(params.ps.colorBegin.g);
-	p.add<sf::Uint32>(params.ps.colorBegin.b);
-	p.add<sf::Uint32>(params.ps.colorBegin.a);
-
-	p.add<sf::Uint32>(params.ps.colorEnd.r);
-	p.add<sf::Uint32>(params.ps.colorEnd.g);
-	p.add<sf::Uint32>(params.ps.colorEnd.b);
-	p.add<sf::Uint32>(params.ps.colorEnd.a);
+	p.add(params.name); //4
+	p.add(params.pp.colorBegin.toInteger()); //5
+	p.add(params.pp.colorEnd.toInteger()); //6
 
 	return p;
 }
@@ -94,8 +77,8 @@ Packet PacketCreator::PlayerNew(
 Packet PacketCreator::PlayerDel(const ClientID clientID)
 {
 	Packet p;
-
 	p.mType = PLAYER_DEL;
+
 	p.add(clientID);
 
 	return p;

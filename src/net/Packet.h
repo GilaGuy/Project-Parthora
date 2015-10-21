@@ -12,6 +12,18 @@ struct Packet
 	static const char DATA_SEPARATOR = 0x1F;
 
 	template < class T >
+	static std::string ToString(T t)
+	{
+		std::stringstream converter;
+		std::string data;
+
+		converter << t;
+		converter >> data;
+
+		return data;
+	}
+
+	template < class T >
 	T get(size_t pos) const
 	{
 		std::stringstream converter;

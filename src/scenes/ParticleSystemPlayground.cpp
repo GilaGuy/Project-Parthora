@@ -62,8 +62,8 @@ void ParticleSystemPlayground::onload()
 	}
 
 	createPlayer(Client::MYSELF, sf::IpAddress::getLocalAddress().toString(), new Fireball(getWindow(), view_main), particleTexture);
+	syncPPwithPS(me->params.pp, *me->ps);
 
-	me->ps->emitterPos = center;
 	sf::Mouse::setPosition(sf::Vector2i(center), getWindow());
 	getWindow().pollEvent(dummyEvent);
 
@@ -75,7 +75,11 @@ void ParticleSystemPlayground::onload()
 	bgm.setLoop(true);
 
 	myScreen.size = getWindow().getSize();
-	conn.send(PacketCreator::Get().PlayerInfo(getClientParams(me), myScreen));
+	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, me->params, myScreen));
+	conn.send(PacketCreator::Get().PlayerMove(center));
+
+	// reset my name to indicate no connection
+	setPlayerName(me, "UNCONNECTED");
 }
 
 void ParticleSystemPlayground::unload()
@@ -127,33 +131,11 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 	}
 	break;
 
+	/*
 	case sf::Event::MouseWheelMoved:
-		//view_main.zoom(1 - event.mouseWheel.delta * 0.0625f);
+		view_main.zoom(1 - event.mouseWheel.delta * 0.0625f);
 		break;
-
-		/*
-		case sf::Event::KeyPressed:
-		switch (event.key.code)
-		{
-		case sf::Keyboard::A:
-		if (view_main_offset.x > -view_main_offset_max)
-		view_main_offset.x += -view_main_offset_value;
-		break;
-		case sf::Keyboard::D:
-		if (view_main_offset.x < view_main_offset_max)
-		view_main_offset.x += view_main_offset_value;
-		break;
-		case sf::Keyboard::W:
-		if (view_main_offset.y > -view_main_offset_max)
-		view_main_offset.y += -view_main_offset_value;
-		break;
-		case sf::Keyboard::S:
-		if (view_main_offset.y < view_main_offset_max)
-		view_main_offset.y += view_main_offset_value;
-		break;
-		}
-		break;
-		*/
+	*/
 
 	case sf::Event::KeyReleased:
 		switch (event.key.code)
@@ -170,17 +152,6 @@ void ParticleSystemPlayground::handleEvent(const sf::Event &event)
 				player->ps->clear();
 			}
 			break;
-
-			/*
-			case sf::Keyboard::A:
-			case sf::Keyboard::D:
-			view_main_offset.x = 0;
-			break;
-			case sf::Keyboard::W:
-			case sf::Keyboard::S:
-			view_main_offset.y = 0;
-			break;
-			*/
 
 		case sf::Keyboard::V:
 			getWindow().setVerticalSyncEnabled(vSync = !vSync);
@@ -274,14 +245,6 @@ void ParticleSystemPlayground::render()
 	getWindow().display();
 }
 
-void ParticleSystemPlayground::randomizeParticleColors(Player* player)
-{
-	player->ps->colorBegin = sf::Color(rand() & 255, rand() & 255, rand() & 255);
-	player->ps->colorEnd = sf::Color(rand() & 255, rand() & 255, rand() & 255);
-
-	conn.send(PacketCreator::Get().PlayerInfo(getClientParams(player), myScreen));
-}
-
 void ParticleSystemPlayground::setControlParticle(bool arg)
 {
 	if (arg)
@@ -304,7 +267,7 @@ Player* ParticleSystemPlayground::createPlayer(ClientID id, std::string name, Pa
 	// check if player already exists
 	for (Player* player : players)
 	{
-		if (player->params.id == id)
+		if (player->id == id)
 		{
 			newPlayer = player;
 			delete newPlayer->ps;
@@ -319,7 +282,7 @@ Player* ParticleSystemPlayground::createPlayer(ClientID id, std::string name, Pa
 		newPlayer = players.back();
 	}
 
-	newPlayer->params.id = id;
+	newPlayer->id = id;
 
 	newPlayer->ps = ps;
 	newPlayer->ps->setTexture(texture);
@@ -327,9 +290,10 @@ Player* ParticleSystemPlayground::createPlayer(ClientID id, std::string name, Pa
 	newPlayer->label.text().setFont(*scene_log.text().getFont());
 	newPlayer->label.text().setCharacterSize(15);
 	newPlayer->label.text().setPosition(10, -10);
-	newPlayer->label.text().setString(name);
 
 	newPlayer->ps->add(newPlayer->label);
+
+	setPlayerName(newPlayer, name);
 
 	if (id == Client::MYSELF)
 	{
@@ -341,16 +305,26 @@ Player* ParticleSystemPlayground::createPlayer(ClientID id, std::string name, Pa
 	return newPlayer;
 }
 
-ClientParams ParticleSystemPlayground::getClientParams(const Player* player)
+void ParticleSystemPlayground::setPlayerName(Player* player, std::string name)
 {
-	ClientParams dcp;
+	player->params.name = name;
+	player->label.text().setString(name);
+}
 
-	dcp.name = player->label.text().getString().toAnsiString();
-	dcp.ps.colorBegin = player->ps->colorBegin;
-	dcp.ps.colorEnd = player->ps->colorEnd;
-	dcp.ps.emitterPos = player->ps->emitterPos;
+void ParticleSystemPlayground::syncPPwithPS(ParticleParams& pp, const ParticleSystem& ps)
+{
+	pp.colorBegin = ps.colorBegin;
+	pp.colorEnd = ps.colorEnd;
+}
 
-	return dcp;
+void ParticleSystemPlayground::randomizeParticleColors(Player* player)
+{
+	ClientParams cp = player->params;
+
+	cp.pp.colorBegin = sf::Color(rand() & 255, rand() & 255, rand() & 255);
+	cp.pp.colorEnd = sf::Color(rand() & 255, rand() & 255, rand() & 255);
+
+	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, cp, myScreen));
 }
 
 // NETWORK CALLBACKS
@@ -363,12 +337,36 @@ void ParticleSystemPlayground::onConnect()
 void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 {
 
-	//if (receivedPacket.mType != PLAYER_MOVE)
-	cout << "R> " << receivedPacket.toString() << endl;
-
+	if (receivedPacket.mType != PLAYER_MOVE)
+		cout << "R> " << receivedPacket.toString() << endl;
 
 	switch (receivedPacket.mType)
 	{
+	case PLAYER_INFO:
+	{
+		ClientID id = receivedPacket.get<ClientID>(0);
+		Player* player = nullptr;
+
+		if (id == Client::MYSELF) player = me;
+		else
+		{
+			for (Player* p : players)
+			{
+				if (p->id == id)
+				{
+					player = p;
+					break;
+				}
+			}
+			if (player == nullptr) return;
+		}
+
+		setPlayerName(player, receivedPacket.get(1));
+		player->ps->colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(2));
+		player->ps->colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(3));
+	}
+	break;
+
 	case PLAYER_NEW:
 	{
 		Player* newPlayer = createPlayer(receivedPacket.get<ClientID>(0), receivedPacket.get(4), new Fireball(getWindow(), view_main), particleTexture);
@@ -386,8 +384,8 @@ void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 
 		newPlayer->ps->emitterPos.y = receivedPacket.get<float>(3) * getWindow().getSize().y;
 
-		newPlayer->ps->colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(5), receivedPacket.get<sf::Uint32>(6), receivedPacket.get<sf::Uint32>(7), receivedPacket.get<sf::Uint32>(8));
-		newPlayer->ps->colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(9), receivedPacket.get<sf::Uint32>(10), receivedPacket.get<sf::Uint32>(11), receivedPacket.get<sf::Uint32>(12));
+		newPlayer->ps->colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(5));
+		newPlayer->ps->colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(6));
 	}
 	break;
 
@@ -397,7 +395,7 @@ void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 
 		for (std::vector<Player*>::iterator it = players.begin(); it != players.end();)
 		{
-			if ((*it)->params.id == clientID)
+			if ((*it)->id == clientID)
 			{
 				delete (*it)->ps;
 				delete (*it);
@@ -423,7 +421,7 @@ void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 
 		for (Player* player : players)
 		{
-			if (player->params.id == pID)
+			if (player->id == pID)
 			{
 				player->ps->emitterPos.x += receivedPacket.get<float>(0);
 				player->ps->emitterPos.y += receivedPacket.get<float>(1);
@@ -438,4 +436,6 @@ void ParticleSystemPlayground::onReceive(const Packet& receivedPacket)
 void ParticleSystemPlayground::onDisconnect()
 {
 	cerr << "Lost connection to server!" << endl;
+
+	setPlayerName(me, "UNCONNECTED");
 }
