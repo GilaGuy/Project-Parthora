@@ -46,6 +46,7 @@ public:
 
 	void updateTitle();
 	void toggleFullScreen();
+	void ignoreOneEvent(sf::Event::EventType eventType);
 
 	sf::Vector2i getMousePosition() const;
 	sf::Vector2f getMousePosition(const sf::View &view) const;
@@ -59,22 +60,17 @@ public:
 	void run();
 
 private:
-	static sf::Event DUMMY_EVENT;
-
-	void consumeLastEvent();
-
-	sf::Vector2u m_nf_size;
-	int m_nf_wStyle;
-	bool m_autoRes;
+	sf::Vector2u m_lastWindowSize;
+	int m_lastWindowStyle;
+	bool m_autoResolution, m_isFullscreen, m_isVSync, m_isRunning;
 
 	sf::Time m_elapsedTime, m_timePerFrame, m_timeSinceLastUpdate;
+
+	std::vector<sf::Event::EventType> eventTypesToIgnoreOnce;
 
 	std::string m_windowName;
 	std::vector<Scene::Ptr> m_windowScenes;
 	Scene::Ptr m_emptyScene;
-
-	float m_zoomDelta;
-	bool m_isFullscreen, m_isVSync, m_isRunning;
 };
 
 #endif /* APPWINDOW_H */
