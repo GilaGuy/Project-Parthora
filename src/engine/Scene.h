@@ -23,6 +23,8 @@ public:
 	const std::string& getName() const;
 	void setName(const std::string &name);
 
+	AppWindow &getWindow() const;
+
 	ID getID() const;
 
 	virtual void onload();
@@ -51,8 +53,6 @@ public:
 	/////
 	virtual void render();
 
-	AppWindow &getWindow() const;
-
 protected:
 	sf::Font scene_font;
 	TGO scene_log;
@@ -60,9 +60,9 @@ protected:
 private:
 	static ID SCENE_ID;
 
+	std::string m_sceneName;
 	AppWindow &m_window;
 	ID m_id;
-	std::string m_sceneName;
 };
 
 template < class S >

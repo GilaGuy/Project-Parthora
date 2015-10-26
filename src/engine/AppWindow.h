@@ -18,14 +18,14 @@ public:
 
 	void create
 		(
-		const std::string &name,
-		unsigned int width,
-		unsigned int height,
-		bool autoResolution,
-		int wStyle = sf::Style::Default,
-		const sf::ContextSettings& cS = sf::ContextSettings(),
-		bool vSync = false
-		);
+			const std::string &name,
+			unsigned int width,
+			unsigned int height,
+			bool autoResolution,
+			int wStyle = sf::Style::Default,
+			const sf::ContextSettings& cS = sf::ContextSettings(),
+			bool vSync = false
+			);
 
 	const std::string& getName() const;
 	void setName(const std::string &name);
@@ -33,26 +33,36 @@ public:
 	void setScene(Scene::Ptr wS, bool replaceCurrent = true);
 	void removeScene(Scene::ID id);
 
-	void updateTitle();
-
-	void toggleFullScreen();
-
-	void setTimePerFrame(int fps);
-	void setVerticalSyncEnabled(bool enabled);
+	int getFPS() const;
+	sf::View getCurrentView() const;
+	sf::Vector2i getDesktopCenter() const;
 
 	bool isFullscreen() const;
 	bool isVSync() const;
 	bool isRunning() const;
 
-	int getFPS() const;
-	sf::Vector2i getDesktopCenter() const;
-	sf::Vector2f getMousePositionRelativeToWindowAndView(const sf::View &view) const;
-	void setMousePositionRelativeToWindowAndView(const sf::Vector2f pos, const sf::View &view);
-	sf::View getCurrentView() const;
+	void setTimePerFrame(int fps);
+	void setVerticalSyncEnabled(bool enabled);
+
+	void updateTitle();
+	void toggleFullScreen();
+
+	sf::Vector2i getMousePosition() const;
+	sf::Vector2f getMousePosition(const sf::View &view) const;
+
+	// AppWindow's setMousePosition methods do not trigger an sf::Event as it will be automatically consumed.
+
+	void setMousePosition(const sf::Vector2i &position);
+	void setMousePosition(const sf::Vector2f & position, const sf::View & view);
+	void setMousePositionAbsolute(const sf::Vector2i &position);
 
 	void run();
 
 private:
+	static sf::Event DUMMY_EVENT;
+
+	void consumeLastEvent();
+
 	sf::Vector2u m_nf_size;
 	int m_nf_wStyle;
 	bool m_autoRes;

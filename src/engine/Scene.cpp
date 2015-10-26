@@ -49,6 +49,11 @@ void Scene::setName(const std::string &name)
 	m_window.updateTitle();
 }
 
+AppWindow &Scene::getWindow() const
+{
+	return m_window;
+}
+
 Scene::ID Scene::getID() const
 {
 	return m_id;
@@ -99,9 +104,4 @@ void Scene::render()
 {
 	getWindow().clear();
 	getWindow().display();
-}
-
-AppWindow &Scene::getWindow() const
-{
-	return m_window;
 }
