@@ -1,14 +1,12 @@
-#ifndef PARTICLESYSTEMPLAYGROUND_H
-#define PARTICLESYSTEMPLAYGROUND_H
+#ifndef GAMESCENE_H
+#define GAMESCENE_H
 
 #include <SFML/Audio.hpp>
-#include "../core/Renderer.h"
-#include "../core/object/SGO.h"
-#include "../core/object/TGO.h"
 #include "../engine/Scene.h"
-#include "../effect/ParticleSystem.h"
+#include "../core/Renderer.h"
 #include "../net/client/Connection.h"
-#include "../entities/Player.h"
+
+class Player;
 
 class GameScene : public Scene
 {
@@ -46,4 +44,4 @@ private:
 	sf::Music bgm;
 };
 
-#endif /* PARTICLESYSTEMPLAYGROUND_H */
+#endif /* GAMESCENE_H */

@@ -14,10 +14,11 @@
 
 #include "GameScene.h"
 
-#include "../engine/AppWindow.h"
-#include "../entities/Fireball.h"
 #include "../GameSettings.h"
+#include "../engine/AppWindow.h"
 #include "../net/PacketCreator.h"
+#include "../entities/Player.h"
+#include "../entities/Fireball.h"
 
 #include <iostream>
 
@@ -107,6 +108,9 @@ void GameScene::updateViews()
 	myScreen.size = getWindow().getSize();
 
 	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, me->extractClientparams(), myScreen));
+
+	if (isControllingParticle) getWindow().setMouseCursorVisible(false);
+	else getWindow().setMouseCursorVisible(true);
 }
 
 void GameScene::handleEvent(const sf::Event &event)
