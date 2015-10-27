@@ -1,3 +1,18 @@
+/**
+ * Screen and its list manager.
+ *
+ * @date       October 26, 2015
+ *
+ * @revisions
+ *
+ * @designer   Melvin Loho
+ *
+ * @programmer Melvin Loho
+ *
+ * @notes      Represents a client's screen.
+ *             It is also used as a doubly linked list element for easy management by the ScreenList.
+ */
+
 #include "Screen.h"
 
 #include <assert.h>

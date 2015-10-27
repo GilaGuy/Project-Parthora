@@ -1,3 +1,18 @@
+/**
+ * Client and its list manager.
+ *
+ * @date       October 26, 2015
+ *
+ * @revisions
+ *
+ * @designer   Melvin Loho
+ *
+ * @programmer Melvin Loho
+ *
+ * @notes      Represents a client connected to the server.
+ *             Includes its main network socket, screen variables and client params.
+ */
+
 #include "Client.h"
 
 #include "Screen.h"
