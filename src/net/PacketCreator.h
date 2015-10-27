@@ -16,7 +16,7 @@ public:
 			const Screen& playerScreen
 			);
 
-	Packet PlayerMove(const sf::Vector2f delta);
+	Packet PlayerMove(const sf::Vector2i delta);
 
 	Packet PlayerNew
 		(

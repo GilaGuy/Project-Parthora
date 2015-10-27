@@ -17,6 +17,7 @@
 #include "../Protocol.h"
 
 #include <iostream>
+#include <iomanip>
 
 void Server::send(Packet p, Client* c)
 {
@@ -25,8 +26,7 @@ void Server::send(Packet p, Client* c)
 
 	c->socket.send(toSend.c_str(), length);
 
-	if (p.mType != PLAYER_MOVE)
-		std::cout << "sent> " << toSend << std::endl;
+	std::cout << "SENT c=" << c->id << ", " << std::setfill('0') << std::setw(4) << length << " bytes>" << toSend << std::endl;
 }
 
 Server::Server() :
@@ -136,6 +136,8 @@ void Server::receiveThread()
 						size_t received;
 						if (c->socket.receive(buffer, Packet::MAX_SIZE, received) == sf::Socket::Done)
 						{
+							std::cout << "RECV c=" << c->id << ", " << std::setfill('0') << std::setw(4) << received << " bytes>";
+
 							p.decode(buffer, received);
 							callbackOnReceive(p, c);
 

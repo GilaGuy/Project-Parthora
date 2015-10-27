@@ -47,7 +47,7 @@ int getScreenIdx(ClientID ownerID)
 
 void onConnect(Client* c)
 {
-	cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " connected!" << endl;
+	cout << "Client " << c->id << " [" << c->socket.getRemoteAddress() << "]" << " connected!" << endl;
 
 	screens.push_back(new Screen());
 
@@ -62,10 +62,6 @@ void onConnect(Client* c)
 
 void onReceive(const Packet& receivedPacket, Client* c)
 {
-
-	if (receivedPacket.mType != PLAYER_MOVE)
-		cout << "R> " << receivedPacket.toString() << endl;
-
 	switch (receivedPacket.mType)
 	{
 	case PLAYER_INFO:
@@ -108,7 +104,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 
 		if (clientScreenIdx == -1)
 		{
-			cerr << "R> " << "PLAYER_MOVE: Packet sender's screen not found!!" << endl;
+			cerr << "PLAYER_MOVE: Packet sender's screen not found!!" << endl;
 		}
 
 		client->params.emitterPos.x += receivedPacket.get<float>(0);
@@ -134,7 +130,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 					if (client->externalScreenOccupancies.find(client->screenCurrent)
 						== client->externalScreenOccupancies.end())
 					{
-						cerr << "R> " << "PLAYER_MOVE: The client's one and only external screen occupancy is not their current screen!!" << endl;
+						cerr << "PLAYER_MOVE: The client's one and only external screen occupancy is not their current screen!!" << endl;
 					}
 				}
 			}
@@ -231,15 +227,12 @@ void onReceive(const Packet& receivedPacket, Client* c)
 		}
 	}
 	break;
-
-	default:
-		cout << "R> " << "Unknown packet received!" << endl;
 	}
 }
 
 void onDisconnect(Client* c)
 {
-	cout << "Client " << c->socket.getRemoteAddress() << " [" << c << "]" << " disconnected!" << endl;
+	cout << "Client " << c->id << " [" << c->socket.getRemoteAddress() << "]" << " disconnected!" << endl;
 
 	for (screen_iterator_vector it = screens.begin(); it != screens.end();)
 	{

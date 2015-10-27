@@ -15,6 +15,7 @@
 #include "Connection.h"
 
 #include <iostream>
+#include <iomanip>
 
 Connection::Connection() :
 	isConnected(false),
@@ -77,8 +78,7 @@ void Connection::send(const Packet& p)
 
 	socket.send(toSend.c_str(), length);
 
-	if (p.mType != PLAYER_MOVE)
-		std::cout << "sent> " << toSend << std::endl;
+	std::cout << "SENT " << std::setfill('0') << std::setw(4) << length << " bytes>" << toSend << std::endl;
 }
 
 void Connection::receiveThread()
@@ -94,6 +94,8 @@ void Connection::receiveThread()
 		size_t received;
 		if (socket.receive(buffer, Packet::MAX_SIZE, received) == sf::Socket::Done)
 		{
+			std::cout << "RECV " << std::setfill('0') << std::setw(4) << received << " bytes>";
+
 			p.decode(buffer, received);
 
 			if (callbackOnReceive == nullptr)

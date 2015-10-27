@@ -19,6 +19,8 @@
 
 #include "Packet.h"
 
+#include <iostream>
+
 std::vector<std::string> &split(const std::string &s, char delim, std::vector<std::string> &elems) {
 	std::stringstream ss(s);
 	std::string item;
@@ -36,7 +38,11 @@ std::vector<std::string> split(const std::string &s, char delim) {
 
 bool Packet::decode(const char* raw, size_t numOfBytes)
 {
-	mData = split(std::string(raw, numOfBytes), DATA_SEPARATOR);
+	std::string packetContents = std::string(raw, numOfBytes);
+
+	std::cout << packetContents << std::endl;
+
+	mData = split(packetContents, DATA_SEPARATOR);
 	mType = static_cast<PacketType>(get<int>(0));
 	mData.erase(mData.begin());
 
@@ -47,7 +53,7 @@ size_t Packet::encode(std::string& encoded) const
 {
 	encoded.clear();
 
-	encoded += static_cast<int>(mType)+'0';
+	encoded += static_cast<int>(mType) + '0';
 
 	for (const std::string d : mData)
 	{
@@ -58,7 +64,7 @@ size_t Packet::encode(std::string& encoded) const
 	// If we want to make all the packets have a fixed length
 	/*
 	if (encoded.length() < MAX_SIZE)
-	encoded += std::string(MAX_SIZE - encoded.length(), '\0');
+		encoded += std::string(MAX_SIZE - encoded.length(), '\0');
 	*/
 
 	return encoded.length();
@@ -68,7 +74,7 @@ std::string Packet::toString() const
 {
 	std::string str;
 
-	str += static_cast<int>(mType)+'0';
+	str += static_cast<int>(mType) + '0';
 
 	for (const std::string d : mData)
 	{

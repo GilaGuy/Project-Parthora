@@ -8,7 +8,7 @@
 
 struct Packet
 {
-	static const size_t MAX_SIZE = 256;
+	static const size_t MAX_SIZE = 1024;
 	static const char DATA_SEPARATOR = 0x1F;
 
 	template < class T >

@@ -62,7 +62,7 @@ void GameScene::onload()
 
 	// center mouse and uncontrol the particle
 
-	sf::Vector2f center = view_main.getCenter();
+	sf::Vector2i center = sf::Vector2i(view_main.getCenter());
 
 	getWindow().setMousePosition(sf::Vector2i(center));
 
@@ -126,14 +126,21 @@ void GameScene::handleEvent(const sf::Event &event)
 	{
 		if (isControllingParticle)
 		{
-			sf::Vector2f delta = getWindow().getMousePosition(view_main) - view_main.getCenter();
+			sf::Vector2i delta = sf::Vector2i(getWindow().getMousePosition(view_main) - view_main.getCenter());
 			getWindow().setMousePosition(sf::Vector2i(view_main.getCenter()));
 
 			// send a position update packet to server if my player is available
 			if (me)
 			{
-				if (delta.x != 0 || delta.y != 0)
+				if (delta.x == 0 && delta.y == 0)
+				{
+					//no movement
+				}
+				else
+				{
+					//cout << delta.x << ", " << delta.y << endl;
 					conn.send(PacketCreator::Get().PlayerMove(delta));
+				}
 			}
 		}
 	}
@@ -286,10 +293,6 @@ void GameScene::onConnect()
 
 void GameScene::onReceive(const Packet& receivedPacket)
 {
-
-	if (receivedPacket.mType != PLAYER_MOVE)
-		cout << "R> " << receivedPacket.toString() << endl;
-
 	switch (receivedPacket.mType)
 	{
 	case PLAYER_INFO:

@@ -40,7 +40,7 @@ Packet PacketCreator::PlayerInfo(
 	return p;
 }
 
-Packet PacketCreator::PlayerMove(const sf::Vector2f delta)
+Packet PacketCreator::PlayerMove(const sf::Vector2i delta)
 {
 	Packet p;
 	p.mType = PLAYER_MOVE;
