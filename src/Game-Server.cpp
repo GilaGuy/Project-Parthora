@@ -159,7 +159,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 
 					client->screenCurrent = targetScreen;
 
-					/*
+					///*
 					// the target screen is now our current screen, so we remove it from our list of ESO
 					for (Client::screen_iterator_set it = client->externalScreenOccupancies.begin();
 					it != client->externalScreenOccupancies.end();)
@@ -174,7 +174,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 							++it;
 						}
 					}
-					*/
+					//*/
 				}
 			}
 		}

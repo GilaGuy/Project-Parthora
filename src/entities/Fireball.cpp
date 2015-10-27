@@ -1,33 +1,26 @@
 /**
-* A fireball implementation of the Particle System.
-*
-* @date       March 2, 2015
-*
-* @revisions
-*
-* @designer   Melvin Loho
-*
-* @programmer Melvin Loho
-*
-* @notes
-*/
+ * A fireball implementation of the Particle System.
+ *
+ * @date       March 2, 2015
+ *
+ * @revisions
+ *
+ * @designer   Melvin Loho
+ *
+ * @programmer Melvin Loho
+ *
+ * @notes
+ */
 
 #include "Fireball.h"
-#include "../engine/AppWindow.h"
-#include "../core/Renderer.h"
 
 #include <iostream>
 
-//TODO: make all the loadFromFile's done only once (make them also static variables).
+bool Fireball::staticResourceLoadLock = false;
+sf::SoundBuffer Fireball::sb;
+sf::Texture Fireball::particleTexture;
 
-Fireball::Fireball(AppWindow& window, sf::View& view) : ParticleSystem(5000),
-window(window),
-view(view),
-lastEmitterPos(),
-swooshVolume(),
-swooshStoppedLen(),
-wavePhase(),
-waveAmp()
+Fireball::Fireball() : ParticleSystem(5000)
 {
 	lifeTimeMin = sf::seconds(0.f), lifeTimeMax = sf::seconds(2.f);
 	velMin = 3, velMax = 30, angleOffsetMin = -1.0f, angleOffsetMax = 1.0f;
@@ -36,13 +29,23 @@ waveAmp()
 	colorEnd = sf::Color(128, 240, 255);
 	alphaMin = alphaMax = 128 / 10;
 
-	sb.loadFromFile("Data/audio/SWOOSH_loop.wav");
+	if (!staticResourceLoadLock)
+	{
+		staticResourceLoadLock = true;
+
+		sb.loadFromFile("Data/audio/SWOOSH_loop.wav");
+		particleTexture.loadFromFile("Data/textures/particle_1.tga");
+	}
+
 	swoosh.setBuffer(sb);
 	swoosh.setLoop(true);
 	swoosh.setVolume(0);
 	swoosh.play();
 
 	shader_shake.loadFromFile("Data/shaders/wave.vert", sf::Shader::Vertex);
+
+	particleTexture.setSmooth(true);
+	setTexture(particleTexture);
 }
 
 Fireball::~Fireball()

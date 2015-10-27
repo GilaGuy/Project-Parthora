@@ -2,16 +2,23 @@
 #define PLAYER_H
 
 #include "../net/Protocol.h"
-#include "../effect/ParticleSystem.h"
 #include "../core/object/TGO.h"
+
+class ParticleSystem;
 
 struct Player
 {
-	static Player* Create(ClientID id, std::string name, ParticleSystem* ps, const sf::Texture& texture, const sf::Font& font);
+	enum ParticleSystemType
+	{
+		NONE,
+		FIREBALL
+	};
+
+	static Player* Create(ClientID id, std::string name, ParticleSystemType pst, const sf::Font& font);
 	static Player* Find(ClientID id);
 	static bool Remove(ClientID id);
 
-	ClientParams extractClientparams() const;
+	ClientParams extractClientParams() const;
 	void setName(std::string name);
 
 	static std::vector<Player*> players;

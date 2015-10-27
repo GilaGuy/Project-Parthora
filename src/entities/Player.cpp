@@ -15,12 +15,14 @@
  */
 
 #include "Player.h"
+#include "../effect/ParticleSystem.h"
 
+#include "Fireball.h"
 #include <iostream>
 
 std::vector<Player*> Player::players;
 
-Player* Player::Create(ClientID id, std::string name, ParticleSystem* ps, const sf::Texture& texture, const sf::Font& font)
+Player* Player::Create(ClientID id, std::string name, ParticleSystemType pst, const sf::Font& font)
 {
 	Player* newPlayer = nullptr;
 
@@ -30,28 +32,36 @@ Player* Player::Create(ClientID id, std::string name, ParticleSystem* ps, const 
 		if (player->id == id)
 		{
 			newPlayer = player;
-			delete newPlayer->ps;
+			break;
 		}
 	}
 
 	// create new player if they're not found
-	if (newPlayer == nullptr)
+	if (!newPlayer)
 	{
-		players.push_back(new Player());
+		std::cout << "Creating new player!" << std::endl;
 
+		players.push_back(new Player());
 		newPlayer = players.back();
+
+		switch (pst)
+		{
+		case FIREBALL:
+			newPlayer->ps = new Fireball();
+			break;
+
+		default:
+			newPlayer->ps = new ParticleSystem();
+		}
+
+		newPlayer->ps->add(newPlayer->label);
 	}
 
 	newPlayer->id = id;
 
-	newPlayer->ps = ps;
-	newPlayer->ps->setTexture(texture);
-
 	newPlayer->label.text().setFont(font);
 	newPlayer->label.text().setCharacterSize(15);
 	newPlayer->label.text().setPosition(10, -10);
-
-	newPlayer->ps->add(newPlayer->label);
 
 	newPlayer->setName(name);
 
@@ -97,7 +107,7 @@ bool Player::Remove(ClientID id)
 	return false;
 }
 
-ClientParams Player::extractClientparams() const
+ClientParams Player::extractClientParams() const
 {
 	ClientParams cp;
 

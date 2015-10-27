@@ -32,9 +32,6 @@ GameScene::GameScene(AppWindow &window) :
 	//conn.setReceiveHandler(std::bind(&GameScene::onReceive, this, std::placeholders::_1));
 	conn.setDisconnectHandler(std::bind(&GameScene::onDisconnect, this));
 
-	particleTexture.loadFromFile("Data/textures/particle_1.tga");
-	particleTexture.setSmooth(true);
-
 	bgm.openFromFile("Data/audio/gardenparty_mono.wav");
 }
 
@@ -59,7 +56,7 @@ void GameScene::onload()
 	}
 
 	// create my particle
-	me = Player::Create(Client::MYSELF, sf::IpAddress::getLocalAddress().toString(), new Fireball(getWindow(), view_main), particleTexture, *scene_log.text().getFont());
+	me = Player::Create(Client::MYSELF, sf::IpAddress::getLocalAddress().toString(), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
 
 	// center mouse and uncontrol the particle
 
@@ -108,7 +105,7 @@ void GameScene::updateViews()
 
 	myScreen.size = getWindow().getSize();
 
-	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, me->extractClientparams(), myScreen));
+	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, me->extractClientParams(), myScreen));
 
 	if (isControllingParticle) getWindow().setMouseCursorVisible(false);
 	else getWindow().setMouseCursorVisible(true);
@@ -277,7 +274,7 @@ void GameScene::setControlParticle(bool arg)
 
 void GameScene::randomizeParticleColors(Player* player)
 {
-	ClientParams cp = player->extractClientparams();
+	ClientParams cp = player->extractClientParams();
 
 	cp.pp.colorBegin = sf::Color(rand() & 255, rand() & 255, rand() & 255);
 	cp.pp.colorEnd = sf::Color(rand() & 255, rand() & 255, rand() & 255);
@@ -316,7 +313,7 @@ void GameScene::onReceive(const Packet& receivedPacket)
 
 	case PLAYER_NEW:
 	{
-		Player* newPlayer = Player::Create(receivedPacket.get<ClientID>(0), receivedPacket.get(4), new Fireball(getWindow(), view_main), particleTexture, *scene_log.text().getFont());
+		Player* newPlayer = Player::Create(receivedPacket.get<ClientID>(0), receivedPacket.get(4), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
 		if (newPlayer->id == Client::MYSELF) me = newPlayer;
 
 		switch (static_cast<Cross>(receivedPacket.get<int>(1)))

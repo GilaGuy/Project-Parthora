@@ -33,18 +33,15 @@ public:
 private:
 	sf::View view_hud, view_main;
 	Renderer renderer;
+
 	Connection conn;
+	Packet lastPacket;
 
 	bool isControllingParticle;
-
 	Player* me;
-
 	Screen myScreen;
 
-	sf::Texture particleTexture;
 	sf::Music bgm;
-
-	Packet lastPacket;
 };
 
 #endif /* GAMESCENE_H */
