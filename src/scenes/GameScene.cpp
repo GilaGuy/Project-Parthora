@@ -17,9 +17,9 @@
 #include "../GameSettings.h"
 #include "../engine/AppWindow.h"
 #include "../net/PacketCreator.h"
-#include "../net/Client.h"
-#include "../entities/Player.h"
-#include "../entities/Fireball.h"
+#include "../net/entities/Client.h"
+#include "../net/entities/Player.h"
+#include "../effect/impl/Fireball.h"
 
 #include <iostream>
 
@@ -56,7 +56,7 @@ void GameScene::onload()
 	}
 
 	// create my particle
-	me = Player::Create(Client::MYSELF, sf::IpAddress::getLocalAddress().toString(), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
+	me = players.add(Client::MYSELF, sf::IpAddress::getLocalAddress().toString(), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
 
 	// center mouse and uncontrol the particle
 
@@ -86,13 +86,9 @@ void GameScene::unload()
 {
 	getWindow().setMouseCursorVisible(true);
 
-	bgm.stop();
+	players.clear();
 
-	for (Player* player : Player::players)
-	{
-		delete player->ps;
-	}
-	Player::players.clear();
+	bgm.stop();
 
 	conn.stop();
 }
@@ -160,7 +156,7 @@ void GameScene::handleEvent(const sf::Event &event)
 			setControlParticle(isControllingParticle = !isControllingParticle);
 			break;
 		case sf::Keyboard::Delete:
-			for (Player* player : Player::players)
+			for (Player* player : players.getList())
 			{
 				player->ps->clear();
 			}
@@ -198,7 +194,7 @@ void GameScene::update(const sf::Time &deltaTime)
 		onReceive(lastPacket);
 	}
 
-	for (Player* player : Player::players)
+	for (Player* player : players.getList())
 	{
 		player->ps->update(deltaTime);
 	}
@@ -218,7 +214,7 @@ void GameScene::update(const sf::Time &deltaTime)
 		+ "\nTotal count: " + std::to_string(ParticleSystem::TotalParticleCount)
 		+ "\n";
 
-	for (Player* player : Player::players)
+	for (Player* player : players.getList())
 	{
 		log += "\n>" + player->label.text().getString()
 			//+ "\n c: " + std::to_string(player->ps->getParticleCount())
@@ -240,7 +236,7 @@ void GameScene::render()
 
 	renderer.begin();
 
-	for (Player* player : Player::players)
+	for (Player* player : players.getList())
 	{
 		renderer.draw(player->ps);
 	}
@@ -301,7 +297,7 @@ void GameScene::onReceive(const Packet& receivedPacket)
 		if (id == Client::MYSELF) player = me;
 		else
 		{
-			player = Player::Find(id);
+			player = players.get(id);
 			if (player == nullptr) return;
 		}
 
@@ -313,7 +309,7 @@ void GameScene::onReceive(const Packet& receivedPacket)
 
 	case PLAYER_NEW:
 	{
-		Player* newPlayer = Player::Create(receivedPacket.get<ClientID>(0), receivedPacket.get(4), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
+		Player* newPlayer = players.add(receivedPacket.get<ClientID>(0), receivedPacket.get(4), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
 		if (newPlayer->id == Client::MYSELF) me = newPlayer;
 
 		switch (static_cast<Cross>(receivedPacket.get<int>(1)))
@@ -334,13 +330,13 @@ void GameScene::onReceive(const Packet& receivedPacket)
 
 	case PLAYER_DEL:
 	{
-		Player::Remove(receivedPacket.get<ClientID>(0));
+		players.rem(receivedPacket.get<ClientID>(0));
 	}
 	break;
 
 	case PLAYER_MOVE:
 	{
-		Player* player = Player::Find(receivedPacket.get<ClientID>(2));
+		Player* player = players.get(receivedPacket.get<ClientID>(2));
 		if (player)
 		{
 			player->ps->emitterPos.x += receivedPacket.get<float>(0);
@@ -355,5 +351,6 @@ void GameScene::onDisconnect()
 {
 	cerr << "Lost connection to server!" << endl;
 
-	me->setName("UNCONNECTED");
+	//me->setName("UNCONNECTED"); <- unsafe because method is called in diff thread *le sigh*
+	// @TODO: make a pollEvent in Connection for other events such as onConnect and onDisconnect
 }

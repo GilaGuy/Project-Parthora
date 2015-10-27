@@ -5,9 +5,8 @@
 #include "../engine/Scene.h"
 #include "../core/Renderer.h"
 #include "../net/client/Connection.h"
-#include "../net/Screen.h"
-
-struct Player;
+#include "../net/entities/Player.h"
+#include "../net/entities/Screen.h"
 
 class GameScene : public Scene
 {
@@ -38,6 +37,7 @@ private:
 	Packet lastPacket;
 
 	bool isControllingParticle;
+	PlayerManager players;
 	Player* me;
 	Screen myScreen;
 

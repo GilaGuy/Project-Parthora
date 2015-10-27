@@ -17,16 +17,16 @@
 #include "net/server/Server.h"
 #include "net/Protocol.h"
 #include "net/PacketCreator.h"
-#include "net/Screen.h"
-#include "net/Client.h"
+#include "net/entities/Client.h"
+#include "net/entities/Screen.h"
 #include "GameSettings.h"
 
 #include <iostream>
 
 using namespace std;
 
-ScreenList screens;
-ClientList clients;
+ScreenManager screens;
+ClientManager clients;
 
 void onConnect(Client* c)
 {
@@ -161,7 +161,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 
 					///*
 					// the target screen is now our current screen, so we remove it from our list of ESO
-					for (Client::screen_iterator_set it = client->externalScreenOccupancies.begin();
+					for (Client::screen_iterator it = client->externalScreenOccupancies.begin();
 					it != client->externalScreenOccupancies.end();)
 					{
 						if (*it == targetScreen)
@@ -218,6 +218,9 @@ void onDisconnect(Client* c)
 
 	// delete the screen owned by the client that disconnected
 	screens.rem(c->id);
+
+	// remove client from the client list
+	clients.rem(c);
 }
 
 int main(int argc, char const *argv[])

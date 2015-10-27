@@ -1,5 +1,5 @@
 /**
- * Screen and its list manager.
+ * Screen and its manager.
  *
  * @date       October 26, 2015
  *
@@ -10,7 +10,7 @@
  * @programmer Melvin Loho
  *
  * @notes      Represents a client's screen.
- *             It is also used as a doubly linked list element for easy management by the ScreenList.
+ *             It is also used as a doubly linked list element for easy management by the ScreenManager.
  */
 
 #include "Screen.h"
@@ -50,18 +50,18 @@ Cross Screen::checkBeyondScreens(sf::Vector2f coords) const
 	}
 }
 
-ScreenList::ScreenList() :
+ScreenManager::ScreenManager() :
 	m_first(nullptr),
 	m_last(nullptr),
 	m_count(0)
 {}
 
-ScreenList::~ScreenList()
+ScreenManager::~ScreenManager()
 {
 	clear();
 }
 
-Screen* ScreenList::add()
+Screen* ScreenManager::add()
 {
 	Screen* newScreen = new Screen();
 	newScreen->prev = nullptr;
@@ -90,17 +90,17 @@ Screen* ScreenList::add()
 	return newScreen;
 }
 
-Screen* ScreenList::getFirst()
+Screen* ScreenManager::getFirst()
 {
 	return m_first;
 }
 
-Screen* ScreenList::getLast()
+Screen* ScreenManager::getLast()
 {
 	return m_last;
 }
 
-Screen* ScreenList::get(ClientID ownerID)
+Screen* ScreenManager::get(ClientID ownerID)
 {
 	Screen* curr = m_first;
 
@@ -114,7 +114,7 @@ Screen* ScreenList::get(ClientID ownerID)
 	return nullptr;
 }
 
-bool ScreenList::rem(ClientID ownerID)
+bool ScreenManager::rem(ClientID ownerID)
 {
 	Screen* toRemove = get(ownerID);
 
@@ -137,12 +137,12 @@ bool ScreenList::rem(ClientID ownerID)
 	return true;
 }
 
-size_t ScreenList::count()
+size_t ScreenManager::count()
 {
 	return m_count;
 }
 
-void ScreenList::clear()
+void ScreenManager::clear()
 {
 	Screen* curr = m_first;
 

@@ -15,7 +15,7 @@
 
 #include "Server.h"
 #include "../Protocol.h"
-#include "../Client.h"
+#include "../entities/Client.h"
 
 #include <iostream>
 #include <iomanip>
@@ -78,7 +78,7 @@ void Server::stop()
 
 	if (thread_running) return;
 
-	for (client_iterator it = clients.begin(); it != clients.end();)
+	for (ClientListIter it = clients.begin(); it != clients.end();)
 	{
 		it = killClient(it);
 	}
@@ -87,7 +87,7 @@ void Server::stop()
 	clients.clear();
 }
 
-Server::client_iterator Server::killClient(client_iterator it_c)
+Server::ClientListIter Server::killClient(ClientListIter it_c)
 {
 	Client* c = (*it_c);
 
@@ -129,7 +129,7 @@ void Server::receiveThread()
 			}
 			else // other events (data receive / client disconnects)
 			{
-				client_iterator it_c = clients.begin(); Client* c;
+				ClientListIter it_c = clients.begin(); Client* c;
 
 				while (it_c != clients.end())
 				{

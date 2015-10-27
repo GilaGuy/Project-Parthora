@@ -10,7 +10,7 @@ struct Client;
 
 class Server
 {
-	typedef std::vector<Client*>::iterator client_iterator;
+	typedef std::vector<Client*>::iterator ClientListIter;
 
 public:
 	static void send(Packet p, Client* c);
@@ -25,7 +25,7 @@ public:
 	bool start(unsigned short port);
 	void stop();
 
-	client_iterator killClient(client_iterator it_c);
+	ClientListIter killClient(ClientListIter it_c);
 
 	bool isRunning();
 

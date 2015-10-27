@@ -1,5 +1,5 @@
 /**
- * Player.
+ * Player and its manager.
  *
  * @date       October 21, 2015
  *
@@ -11,18 +11,39 @@
  *
  * @notes      This file contains the Player class which represents a player on the screen.
  *             It is composed of all of the parts that is included in a player.
- *             It has static methods to Create, Find and Remove players from the pool.
+ *             Includes the PlayerManager to manage a set of players.
  */
 
 #include "Player.h"
-#include "../effect/ParticleSystem.h"
+#include "../../effect/ParticleSystem.h"
+#include "../../effect/impl/Fireball.h"
 
-#include "Fireball.h"
 #include <iostream>
 
-std::vector<Player*> Player::players;
+ClientParams Player::extractClientParams() const
+{
+	ClientParams cp;
 
-Player* Player::Create(ClientID id, std::string name, ParticleSystemType pst, const sf::Font& font)
+	cp.name = label.text().getString().toAnsiString();
+	cp.emitterPos = ps->emitterPos;
+	cp.pp.colorBegin = ps->colorBegin;
+	cp.pp.colorEnd = ps->colorEnd;
+
+	return cp;
+}
+
+void Player::setName(std::string name)
+{
+	label.text().setString(name);
+}
+
+PlayerManager::PlayerManager()
+{}
+
+PlayerManager::~PlayerManager()
+{}
+
+Player* PlayerManager::add(ClientID id, std::string name, Player::ParticleSystemType pst, const sf::Font& font)
 {
 	Player* newPlayer = nullptr;
 
@@ -41,12 +62,11 @@ Player* Player::Create(ClientID id, std::string name, ParticleSystemType pst, co
 	{
 		std::cout << "Creating new player!" << std::endl;
 
-		players.push_back(new Player());
-		newPlayer = players.back();
+		newPlayer = *players.insert(new Player()).first;
 
 		switch (pst)
 		{
-		case FIREBALL:
+		case Player::ParticleSystemType::FIREBALL:
 			newPlayer->ps = new Fireball();
 			break;
 
@@ -70,7 +90,7 @@ Player* Player::Create(ClientID id, std::string name, ParticleSystemType pst, co
 	return newPlayer;
 }
 
-Player* Player::Find(ClientID id)
+Player* PlayerManager::get(ClientID id)
 {
 	for (Player* player : players)
 	{
@@ -83,16 +103,16 @@ Player* Player::Find(ClientID id)
 	return nullptr;
 }
 
-bool Player::Remove(ClientID id)
+bool PlayerManager::rem(ClientID id)
 {
-	for (std::vector<Player*>::iterator it = Player::players.begin(); it != Player::players.end();)
+	for (PlayerListIter it = players.begin(); it != players.end();)
 	{
 		if ((*it)->id == id)
 		{
-			delete (*it)->ps;
-			delete (*it);
+			delete (*it)->ps; (*it)->ps = nullptr;
+			delete (*it); //(*it) = nullptr;
 
-			it = Player::players.erase(it);
+			it = players.erase(it);
 
 			std::cout << "Player removed! ID: " << id << std::endl;
 			return true;
@@ -107,19 +127,13 @@ bool Player::Remove(ClientID id)
 	return false;
 }
 
-ClientParams Player::extractClientParams() const
+void PlayerManager::clear()
 {
-	ClientParams cp;
+	for (Player* player : players)
+	{
+		delete player->ps; player->ps = nullptr;
+		delete player; player = nullptr;
+	}
 
-	cp.name = label.text().getString().toAnsiString();
-	cp.emitterPos = ps->emitterPos;
-	cp.pp.colorBegin = ps->colorBegin;
-	cp.pp.colorEnd = ps->colorEnd;
-
-	return cp;
-}
-
-void Player::setName(std::string name)
-{
-	label.text().setString(name);
+	players.clear();
 }

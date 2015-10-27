@@ -2,7 +2,7 @@
 #define PS_FIREBALL_H
 
 #include <SFML/Audio.hpp>
-#include "../effect/ParticleSystem.h"
+#include "../ParticleSystem.h"
 
 class Fireball : public ParticleSystem
 {

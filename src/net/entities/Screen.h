@@ -1,7 +1,7 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-#include "Protocol.h"
+#include "../Protocol.h"
 
 struct Client;
 
@@ -18,11 +18,11 @@ struct Screen
 	float boundaryLeft, boundaryRight;
 };
 
-class ScreenList
+class ScreenManager
 {
 public:
-	ScreenList();
-	~ScreenList();
+	ScreenManager();
+	~ScreenManager();
 
 	Screen* add();
 	Screen* getFirst();
