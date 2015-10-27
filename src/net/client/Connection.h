@@ -3,6 +3,8 @@
 
 #include <functional>
 #include <mutex>
+#include <stack>
+#include <SFML\Network.hpp>
 #include "../Protocol.h"
 #include "../Packet.h"
 
@@ -15,7 +17,7 @@ public:
 	void setConnectHandler(std::function<void()> onConnect);
 	void setReceiveHandler(std::function<void(const Packet&)> onReceive);
 	void setDisconnectHandler(std::function<void()> onDisconnect);
-	std::vector<Packet> getPendingPackets();
+	bool pollPacket(Packet& packet);
 
 	bool start(std::string serverIP, unsigned short port);
 	void stop();
@@ -32,7 +34,7 @@ private:
 	std::function<void(const Packet&)> callbackOnReceive;
 	std::function<void()> callbackOnDisconnect;
 
-	std::vector<Packet> pendingPackets;
+	std::stack<Packet> pendingPackets;
 	std::mutex mutexPendingPackets;
 
 	bool isConnected;

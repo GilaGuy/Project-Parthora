@@ -5,8 +5,9 @@
 #include "../engine/Scene.h"
 #include "../core/Renderer.h"
 #include "../net/client/Connection.h"
+#include "../net/Screen.h"
 
-class Player;
+struct Player;
 
 class GameScene : public Scene
 {
@@ -42,6 +43,8 @@ private:
 
 	sf::Texture particleTexture;
 	sf::Music bgm;
+
+	Packet lastPacket;
 };
 
 #endif /* GAMESCENE_H */

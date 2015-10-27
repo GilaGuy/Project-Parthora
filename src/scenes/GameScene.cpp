@@ -17,6 +17,7 @@
 #include "../GameSettings.h"
 #include "../engine/AppWindow.h"
 #include "../net/PacketCreator.h"
+#include "../net/Client.h"
 #include "../entities/Player.h"
 #include "../entities/Fireball.h"
 
@@ -195,9 +196,9 @@ void GameScene::update(const sf::Time &deltaTime)
 {
 	ParticleSystem::TotalParticleCount = 0;
 
-	for (const Packet& pendingPacket : conn.getPendingPackets())
+	while (conn.pollPacket(lastPacket))
 	{
-		onReceive(pendingPacket);
+		onReceive(lastPacket);
 	}
 
 	for (Player* player : Player::players)

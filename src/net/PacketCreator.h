@@ -3,6 +3,7 @@
 
 #include "Protocol.h"
 #include "Packet.h"
+#include "Screen.h"
 
 class PacketCreator
 {

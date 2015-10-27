@@ -41,16 +41,22 @@ void Connection::setDisconnectHandler(std::function<void()> onDisconnect)
 	callbackOnDisconnect = onDisconnect;
 }
 
-std::vector<Packet> Connection::getPendingPackets()
+bool Connection::pollPacket(Packet& packet)
 {
+	bool available;
+
 	mutexPendingPackets.lock();
 
-	std::vector<Packet> copyOfPendingPackets = pendingPackets;
-	pendingPackets.clear();
+	available = !pendingPackets.empty();
+	if (available)
+	{
+		packet = pendingPackets.top();
+		pendingPackets.pop();
+	}
 
 	mutexPendingPackets.unlock();
 
-	return copyOfPendingPackets;
+	return available;
 }
 
 bool Connection::start(std::string serverIP, unsigned short port)
@@ -102,7 +108,7 @@ void Connection::receiveThread()
 			{
 				mutexPendingPackets.lock();
 
-				pendingPackets.push_back(p);
+				pendingPackets.push(p);
 
 				mutexPendingPackets.unlock();
 			}

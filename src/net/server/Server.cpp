@@ -15,6 +15,7 @@
 
 #include "Server.h"
 #include "../Protocol.h"
+#include "../Client.h"
 
 #include <iostream>
 #include <iomanip>
@@ -39,7 +40,9 @@ Server::Server() :
 {}
 
 Server::~Server()
-{}
+{
+	stop();
+}
 
 void Server::setConnectHandler(std::function<void(Client*)> onConnect)
 {
@@ -75,9 +78,12 @@ void Server::stop()
 
 	if (thread_running) return;
 
+	for (client_iterator it = clients.begin(); it != clients.end();)
+	{
+		it = killClient(it);
+	}
+
 	selector.clear();
-	for (Client* c : clients) c->socket.disconnect();
-	for (Client* c : clients) delete c;
 	clients.clear();
 }
 

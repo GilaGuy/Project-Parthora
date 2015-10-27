@@ -1,14 +1,11 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
-#include <SFML/Network.hpp>
 #include <SFML/Graphics.hpp>
-#include <set>
 
 // TYPEDEFS --------------------------------------------------------------------
 
 typedef sf::Uint16 ClientID;
-typedef sf::Uint16 ScreenID;
 
 //-----------------------------------------------------------------------------<
 
@@ -47,41 +44,6 @@ struct ClientParams
 	sf::Vector2f emitterPos;
 	ParticleParams pp;
 };
-
-//-----------------------------------------------------------------------------<
-
-// STRUCTS ---------------------------------------------------------------------
-
-struct Client;
-
-struct Screen
-{
-	Client* owner;
-
-	ScreenID id;
-	sf::Vector2u size;
-	float boundaryLeft, boundaryRight;
-};
-
-struct Client
-{
-	static const ClientID MYSELF = 0;
-
-	sf::TcpSocket socket;
-
-	Screen *screenOwned, *screenCurrent;
-	std::set<Screen*> externalScreenOccupancies;
-
-	ClientID id;
-	ClientParams params;
-};
-
-//-----------------------------------------------------------------------------<
-
-// HELPER FUNCTIONS ------------------------------------------------------------
-
-Cross checkBeyondBoundaries(sf::Vector2f coords, const Screen& s);
-Cross checkBeyondScreens(sf::Vector2f coords, const Screen& s);
 
 //-----------------------------------------------------------------------------<
 

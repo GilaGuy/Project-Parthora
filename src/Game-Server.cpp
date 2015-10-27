@@ -16,48 +16,23 @@
 #include <map>
 #include "net/server/Server.h"
 #include "net/Protocol.h"
-#include "GameSettings.h"
 #include "net/PacketCreator.h"
+#include "net/Screen.h"
+#include "net/Client.h"
+#include "GameSettings.h"
 
 #include <iostream>
 
 using namespace std;
 
-ClientID clientID = 0;
-ScreenID screenID = 0;
-
-vector<Screen*> screens;
-typedef vector<Screen*>::iterator screen_iterator_vector;
-typedef set<Screen*>::iterator screen_iterator_set;
-
-int getScreenIdx(ClientID ownerID)
-{
-	for (int s = 0; s < screens.size(); ++s)
-	{
-		if (screens[s]->owner->id == ownerID)
-		{
-			return s;
-		}
-	}
-
-	cerr << "Client screen not found! Owner ID: " << ownerID << endl;
-
-	return -1;
-}
+ScreenList screens;
+ClientList clients;
 
 void onConnect(Client* c)
 {
-	cout << "Client " << c->id << " [" << c->socket.getRemoteAddress() << "]" << " connected!" << endl;
+	cout << "Client " << c->id << " [" << c->socket.getRemoteAddress() << "] " << "connected!" << endl;
 
-	screens.push_back(new Screen());
-
-	Screen* newScreen = screens.back();
-	newScreen->id = ++screenID;
-	newScreen->owner = c;
-
-	c->id = ++clientID;
-	c->screenOwned = screens.back();
-	c->screenCurrent = c->screenOwned;
+	clients.add(c);
 }
 
 void onReceive(const Packet& receivedPacket, Client* c)
@@ -97,20 +72,14 @@ void onReceive(const Packet& receivedPacket, Client* c)
 
 	case PLAYER_MOVE:
 	{
-		int clientScreenIdx = getScreenIdx(c->id);
-		int targetScreenIdx = clientScreenIdx;
-		Client* client = screens.at(clientScreenIdx)->owner; // the client that's crossing screens
+		Screen* targetScreen;
+		Client* client = c;
 		Cross cross;
-
-		if (clientScreenIdx == -1)
-		{
-			cerr << "PLAYER_MOVE: Packet sender's screen not found!!" << endl;
-		}
 
 		client->params.emitterPos.x += receivedPacket.get<float>(0);
 		client->params.emitterPos.y += receivedPacket.get<float>(1);
 
-		cross = checkBeyondBoundaries(client->params.emitterPos, *client->screenCurrent);
+		cross = client->screenCurrent->checkBeyondBoundaries(client->params.emitterPos);
 
 		if (cross == NO_CROSS) //>> if within boundaries
 		{
@@ -143,19 +112,17 @@ void onReceive(const Packet& receivedPacket, Client* c)
 			{
 			case CROSS_LEFT:
 				xOffset = 0 + client->params.emitterPos.x;
-				--targetScreenIdx;
+				targetScreen = c->screenCurrent->prev;
 				break;
 
 			case CROSS_RIGHT:
 				xOffset = client->screenCurrent->size.x - client->params.emitterPos.x;
-				++targetScreenIdx;
+				targetScreen = c->screenCurrent->next;
 				break;
 			}
 
-			if (targetScreenIdx >= 0 && targetScreenIdx < screens.size())
+			if (targetScreen)
 			{
-				Screen* targetScreen = screens.at(targetScreenIdx);
-
 				if (find(client->externalScreenOccupancies.begin(),
 					client->externalScreenOccupancies.end(),
 					targetScreen)
@@ -174,7 +141,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 					client->externalScreenOccupancies.insert(targetScreen);
 				}
 
-				cross = checkBeyondScreens(client->params.emitterPos, *client->screenCurrent);
+				cross = client->screenCurrent->checkBeyondScreens(client->params.emitterPos);
 
 				//>> if beyond screen
 				if (cross != NO_CROSS)
@@ -194,17 +161,18 @@ void onReceive(const Packet& receivedPacket, Client* c)
 
 					/*
 					// the target screen is now our current screen, so we remove it from our list of ESO
-					for (screen_iterator_set it = client->externalScreenOccupancies.begin();
+					for (Client::screen_iterator_set it = client->externalScreenOccupancies.begin();
 					it != client->externalScreenOccupancies.end();)
 					{
-					if (*it == targetScreen)
-					{
-					it = client->externalScreenOccupancies.erase(it);
-					}
-					else
-					{
-					++it;
-					}
+						if (*it == targetScreen)
+						{
+							it = client->externalScreenOccupancies.erase(it);
+							return;
+						}
+						else
+						{
+							++it;
+						}
 					}
 					*/
 				}
@@ -232,50 +200,24 @@ void onReceive(const Packet& receivedPacket, Client* c)
 
 void onDisconnect(Client* c)
 {
-	cout << "Client " << c->id << " [" << c->socket.getRemoteAddress() << "]" << " disconnected!" << endl;
+	cout << "Client " << c->id << " [" << c->socket.getRemoteAddress() << "] " << "disconnected!" << endl;
 
-	for (screen_iterator_vector it = screens.begin(); it != screens.end();)
+	// tell client's ESOs to delete the player
+	if (!c->externalScreenOccupancies.empty())
 	{
-		if ((*it)->owner == c)
+		Packet playerDeletePacket = PacketCreator::Get().PlayerDel(c->id);
+
+		for (Screen* s : c->externalScreenOccupancies)
 		{
-			if (!c->externalScreenOccupancies.empty())
-			{
-				Packet playerDeletePacket = PacketCreator::Get().PlayerDel(c->id);
-
-				for (Screen* s : c->externalScreenOccupancies)
-				{
-					Server::send(playerDeletePacket, s->owner);
-				}
-			}
-
-			for (const Screen* availableScreen : screens)
-			{
-				if (!availableScreen->owner->externalScreenOccupancies.empty())
-				{
-					for (screen_iterator_set it = availableScreen->owner->externalScreenOccupancies.begin();
-					it != availableScreen->owner->externalScreenOccupancies.end();)
-					{
-						if (*it == c->screenOwned /*disconnected client's screen*/)
-						{
-							it = availableScreen->owner->externalScreenOccupancies.erase(it);
-						}
-						else
-						{
-							++it;
-						}
-					}
-				}
-			}
-
-			// delete screen owned by the client that disconnected
-			it = screens.erase(it);
-			return;
-		}
-		else
-		{
-			++it;
+			Server::send(playerDeletePacket, s->owner);
 		}
 	}
+
+	// remove the screen that the disconnected client owns from other clients' ESOs
+	cout << "Client " << c->id << " > " << "Removed " << clients.remESOs(c->screenOwned) << " ESOs." << endl;
+
+	// delete the screen owned by the client that disconnected
+	screens.rem(c->id);
 }
 
 int main(int argc, char const *argv[])
@@ -290,6 +232,8 @@ int main(int argc, char const *argv[])
 	server.setConnectHandler(onConnect);
 	server.setReceiveHandler(onReceive);
 	server.setDisconnectHandler(onDisconnect);
+
+	clients.setScreenList(&screens);
 
 	if (!server.start(GameSettings::serverPort))
 	{
