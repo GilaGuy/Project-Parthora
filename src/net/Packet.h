@@ -15,74 +15,74 @@ struct Packet
 	static std::string ToString(T t)
 	{
 		std::stringstream converter;
-		std::string data;
+		std::string converted;
 
 		converter << t;
-		converter >> data;
+		converter >> converted;
 
-		return data;
+		return converted;
 	}
 
 	template < class T >
 	T get(size_t pos) const
 	{
 		std::stringstream converter;
-		T data;
+		T converted;
 
-		converter << mData.at(pos);
-		converter >> data;
+		converter << data.at(pos);
+		converter >> converted;
 
-		return data;
+		return converted;
 	}
 
 	inline std::string get(size_t pos) const
 	{
-		return mData.at(pos);
+		return data.at(pos);
 	}
 
 	inline size_t getDataSize() const
 	{
-		return mData.size();
+		return data.size();
 	}
 
 	template < class T >
 	void add(T t)
 	{
 		std::stringstream converter;
-		std::string data;
+		std::string converted;
 
 		converter << t;
-		converter >> data;
+		converter >> converted;
 
-		mData.push_back(data);
+		data.push_back(converted);
 	}
 
 	inline void add(std::string str)
 	{
-		mData.push_back(str);
+		data.push_back(str);
 	}
 
 	inline std::string rem(size_t idx)
 	{
-		mData.erase(mData.begin() + idx);
+		data.erase(data.begin() + idx);
 	}
 
 	inline void remLast()
 	{
-		mData.pop_back();
+		data.pop_back();
 	}
 
 	inline void replace(size_t idx, std::string newstr)
 	{
-		mData.at(idx) = newstr;
+		data.at(idx) = newstr;
 	}
 
 	bool decode(const char* raw, size_t numOfBytes);
 	size_t encode(std::string& encoded) const;
 	std::string toString() const;
 
-	PacketType mType;
-	std::vector<std::string> mData;
+	PacketType type;
+	std::vector<std::string> data;
 };
 
 #endif // PACKET_H

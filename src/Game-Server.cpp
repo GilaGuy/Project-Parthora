@@ -34,7 +34,7 @@ void onConnect(Client* c)
 
 void onReceive(const Packet& receivedPacket, Client* c)
 {
-	switch (receivedPacket.mType)
+	switch (receivedPacket.type)
 	{
 	case PLAYER_INFO:
 	{

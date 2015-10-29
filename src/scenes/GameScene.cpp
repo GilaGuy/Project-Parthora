@@ -28,10 +28,6 @@ using namespace std;
 GameScene::GameScene(AppWindow &window) :
 	Scene(window, "Game Scene"), renderer(window, 1000), me(nullptr)
 {
-	conn.setConnectHandler(std::bind(&GameScene::onConnect, this));
-	//conn.setReceiveHandler(std::bind(&GameScene::onReceive, this, std::placeholders::_1));
-	conn.setDisconnectHandler(std::bind(&GameScene::onDisconnect, this));
-
 	bgm.openFromFile("Data/audio/gardenparty_mono.wav");
 }
 
@@ -107,12 +103,11 @@ void GameScene::updateViews()
 	else getWindow().setMouseCursorVisible(true);
 }
 
-void GameScene::handleEvent(const sf::Event &event)
+void GameScene::handleEvent(const sf::Event& event)
 {
 	Scene::handleEvent(event);
 
-	static bool vSync = false, particleBuilder = false, music1Toggle = false;
-	//static float view_main_offset_value = 5, view_main_offset_max = 15;
+	static bool vSync = false, particleBuilder = false, bgmToggle = false;
 
 	switch (event.type)
 	{
@@ -172,8 +167,8 @@ void GameScene::handleEvent(const sf::Event &event)
 			}
 			break;
 		case sf::Keyboard::M:
-			music1Toggle = !music1Toggle;
-			if (music1Toggle) bgm.play();
+			bgmToggle = !bgmToggle;
+			if (bgmToggle) bgm.play();
 			else bgm.stop();
 			break;
 		}
@@ -185,13 +180,13 @@ void GameScene::handleEvent(const sf::Event &event)
 	}
 }
 
-void GameScene::update(const sf::Time &deltaTime)
+void GameScene::update(const sf::Time& deltaTime)
 {
 	ParticleSystem::TotalParticleCount = 0;
 
-	while (conn.pollPacket(lastPacket))
+	while (conn.pollEvent(connEvent))
 	{
-		onReceive(lastPacket);
+		handleConnectionEvent(connEvent);
 	}
 
 	for (Player* player : players.getList())
@@ -278,7 +273,25 @@ void GameScene::randomizeParticleColors(Player* player)
 	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, cp, myScreen));
 }
 
-// NETWORK CALLBACKS
+// NETWORK METHODS
+
+void GameScene::handleConnectionEvent(const Connection::Event& connEvent)
+{
+	switch (connEvent.type)
+	{
+	case Connection::Event::CONNECT:
+		onConnect();
+		break;
+
+	case Connection::Event::PACKET:
+		onReceive(connEvent.packet);
+		break;
+
+	case Connection::Event::DISCONNECT:
+		onDisconnect();
+		break;
+	}
+}
 
 void GameScene::onConnect()
 {
@@ -287,7 +300,7 @@ void GameScene::onConnect()
 
 void GameScene::onReceive(const Packet& receivedPacket)
 {
-	switch (receivedPacket.mType)
+	switch (receivedPacket.type)
 	{
 	case PLAYER_INFO:
 	{
@@ -349,8 +362,7 @@ void GameScene::onReceive(const Packet& receivedPacket)
 
 void GameScene::onDisconnect()
 {
-	cerr << "Lost connection to server!" << endl;
+	cout << "Lost connection to server!" << endl;
 
-	//me->setName("UNCONNECTED"); <- unsafe because method is called in diff thread *le sigh*
-	// @TODO: make a pollEvent in Connection for other events such as onConnect and onDisconnect
+	me->setName("UNCONNECTED");
 }

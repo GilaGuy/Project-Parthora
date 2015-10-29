@@ -19,45 +19,11 @@
 
 Connection::Connection() :
 	isConnected(false),
-	clientThread(&Connection::receiveThread, this),
-	callbackOnReceive(nullptr)
+	clientThread(&Connection::receiveThread, this)
 {}
 
 Connection::~Connection()
 {}
-
-void Connection::setConnectHandler(std::function<void()> onConnect)
-{
-	callbackOnConnect = onConnect;
-}
-
-void Connection::setReceiveHandler(std::function<void(const Packet&)> onReceive)
-{
-	callbackOnReceive = onReceive;
-}
-
-void Connection::setDisconnectHandler(std::function<void()> onDisconnect)
-{
-	callbackOnDisconnect = onDisconnect;
-}
-
-bool Connection::pollPacket(Packet& packet)
-{
-	bool available;
-
-	mutexPendingPackets.lock();
-
-	available = !pendingPackets.empty();
-	if (available)
-	{
-		packet = pendingPackets.top();
-		pendingPackets.pop();
-	}
-
-	mutexPendingPackets.unlock();
-
-	return available;
-}
 
 bool Connection::start(std::string serverIP, unsigned short port)
 {
@@ -77,6 +43,24 @@ void Connection::stop()
 	isConnected = false;
 }
 
+bool Connection::pollEvent(Event& connEvent)
+{
+	bool available;
+
+	mutexConnEvents.lock();
+
+	available = !connEvents.empty();
+	if (available)
+	{
+		connEvent = connEvents.top();
+		connEvents.pop();
+	}
+
+	mutexConnEvents.unlock();
+
+	return available;
+}
+
 void Connection::send(const Packet& p)
 {
 	std::string toSend;
@@ -91,31 +75,33 @@ void Connection::receiveThread()
 {
 	isConnected = true;
 
-	if (callbackOnConnect != nullptr) callbackOnConnect();
+	mutexConnEvents.lock();
+
+	connEvents.push(Event());
+	connEvents.top().type = Event::CONNECT;
+
+	mutexConnEvents.unlock();
 
 	while (isConnected)
 	{
-		char buffer[Packet::MAX_SIZE]; Packet p;
+		char buffer[Packet::MAX_SIZE];
 
 		size_t received;
 		if (socket.receive(buffer, Packet::MAX_SIZE, received) == sf::Socket::Done)
 		{
 			std::cout << "RECV " << std::setfill('0') << std::setw(4) << received << " bytes>";
 
-			p.decode(buffer, received);
+			Packet packet;
 
-			if (callbackOnReceive == nullptr)
-			{
-				mutexPendingPackets.lock();
+			packet.decode(buffer, received);
 
-				pendingPackets.push(p);
+			mutexConnEvents.lock();
 
-				mutexPendingPackets.unlock();
-			}
-			else
-			{
-				callbackOnReceive(p);
-			}
+			connEvents.push(Event());
+			connEvents.top().type = Event::PACKET;
+			connEvents.top().packet = packet;
+
+			mutexConnEvents.unlock();
 		}
 		else
 		{
@@ -124,5 +110,10 @@ void Connection::receiveThread()
 		}
 	}
 
-	if (callbackOnDisconnect != nullptr) callbackOnDisconnect();
+	mutexConnEvents.lock();
+
+	connEvents.push(Event());
+	connEvents.top().type = Event::DISCONNECT;
+
+	mutexConnEvents.unlock();
 }

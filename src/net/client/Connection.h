@@ -1,26 +1,43 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#include <functional>
 #include <mutex>
 #include <stack>
-#include <SFML\Network.hpp>
-#include "../Protocol.h"
+#include <SFML/Network.hpp>
 #include "../Packet.h"
 
 class Connection
 {
 public:
+	class Event
+	{
+	public:
+		// EVENT TYPES>
+
+		enum EventType
+		{
+			CONNECT,
+			PACKET,
+			DISCONNECT
+		};
+
+		// DATA>
+
+		// the type of the event
+		EventType type;
+
+		// the possible contents of the event>
+
+		Packet packet;
+	};
+
 	Connection();
 	~Connection();
 
-	void setConnectHandler(std::function<void()> onConnect);
-	void setReceiveHandler(std::function<void(const Packet&)> onReceive);
-	void setDisconnectHandler(std::function<void()> onDisconnect);
-	bool pollPacket(Packet& packet);
-
 	bool start(std::string serverIP, unsigned short port);
 	void stop();
+
+	bool pollEvent(Event& connEvent);
 
 	void send(const Packet& p);
 
@@ -30,12 +47,8 @@ private:
 	sf::TcpSocket socket;
 	sf::Thread clientThread;
 
-	std::function<void()> callbackOnConnect;
-	std::function<void(const Packet&)> callbackOnReceive;
-	std::function<void()> callbackOnDisconnect;
-
-	std::stack<Packet> pendingPackets;
-	std::mutex mutexPendingPackets;
+	std::stack<Event> connEvents;
+	std::mutex mutexConnEvents;
 
 	bool isConnected;
 };

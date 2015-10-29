@@ -42,9 +42,9 @@ bool Packet::decode(const char* raw, size_t numOfBytes)
 
 	std::cout << packetContents << std::endl;
 
-	mData = split(packetContents, DATA_SEPARATOR);
-	mType = static_cast<PacketType>(get<int>(0));
-	mData.erase(mData.begin());
+	data = split(packetContents, DATA_SEPARATOR);
+	type = static_cast<PacketType>(get<int>(0));
+	data.erase(data.begin());
 
 	return true;
 }
@@ -53,9 +53,9 @@ size_t Packet::encode(std::string& encoded) const
 {
 	encoded.clear();
 
-	encoded += static_cast<int>(mType) + '0';
+	encoded += static_cast<int>(type) + '0';
 
-	for (const std::string d : mData)
+	for (const std::string d : data)
 	{
 		encoded += DATA_SEPARATOR;
 		encoded += d;
@@ -74,9 +74,9 @@ std::string Packet::toString() const
 {
 	std::string str;
 
-	str += static_cast<int>(mType) + '0';
+	str += static_cast<int>(type) + '0';
 
-	for (const std::string d : mData)
+	for (const std::string d : data)
 	{
 		str += DATA_SEPARATOR;
 		str += d;

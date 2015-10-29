@@ -15,7 +15,6 @@ typedef sf::Uint16 ClientID;
 // a particle is created from one screen, crosses to another screen, then disconnects.
 enum PacketType
 {
-	NO_MT,
 	PLAYER_INFO,
 	PLAYER_MOVE,
 	PLAYER_NEW,

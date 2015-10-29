@@ -26,7 +26,7 @@ Packet PacketCreator::PlayerInfo(
 	const Screen& playerScreen)
 {
 	Packet p;
-	p.mType = PLAYER_INFO;
+	p.type = PLAYER_INFO;
 
 	p.add(clientID); //0
 
@@ -43,7 +43,7 @@ Packet PacketCreator::PlayerInfo(
 Packet PacketCreator::PlayerMove(const sf::Vector2i delta)
 {
 	Packet p;
-	p.mType = PLAYER_MOVE;
+	p.type = PLAYER_MOVE;
 
 	p.add(delta.x);
 	p.add(delta.y);
@@ -59,7 +59,7 @@ Packet PacketCreator::PlayerNew(
 	const ClientParams& params)
 {
 	Packet p;
-	p.mType = PLAYER_NEW;
+	p.type = PLAYER_NEW;
 
 	p.add(clientID); //0
 
@@ -77,7 +77,7 @@ Packet PacketCreator::PlayerNew(
 Packet PacketCreator::PlayerDel(const ClientID clientID)
 {
 	Packet p;
-	p.mType = PLAYER_DEL;
+	p.type = PLAYER_DEL;
 
 	p.add(clientID);
 

@@ -25,6 +25,7 @@ public:
 
 	void randomizeParticleColors(Player* player);
 
+	void handleConnectionEvent(const Connection::Event &connEvent);
 	void onConnect();
 	void onReceive(const Packet& p);
 	void onDisconnect();
@@ -34,7 +35,7 @@ private:
 	Renderer renderer;
 
 	Connection conn;
-	Packet lastPacket;
+	Connection::Event connEvent;
 
 	bool isControllingParticle;
 	PlayerManager players;
