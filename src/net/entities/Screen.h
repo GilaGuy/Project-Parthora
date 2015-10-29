@@ -29,8 +29,9 @@ public:
 	Screen* getLast();
 	Screen* get(ClientID ownerID);
 	bool rem(ClientID ownerID);
-	size_t count();
+	size_t count() const;
 	void clear();
+	void print() const;
 
 private:
 	Screen* m_first;

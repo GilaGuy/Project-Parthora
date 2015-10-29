@@ -16,6 +16,7 @@
 #include "Screen.h"
 
 #include <assert.h>
+#include <iostream>
 #include "Client.h"
 
 Cross Screen::checkBeyondBoundaries(sf::Vector2f coords) const
@@ -137,7 +138,7 @@ bool ScreenManager::rem(ClientID ownerID)
 	return true;
 }
 
-size_t ScreenManager::count()
+size_t ScreenManager::count() const
 {
 	return m_count;
 }
@@ -145,14 +146,16 @@ size_t ScreenManager::count()
 void ScreenManager::clear()
 {
 	Screen* curr = m_first;
+	Screen* toDelete = nullptr;
 
 	size_t deleteCount = 0;
 
 	while (curr)
 	{
+		toDelete = curr;
 		curr = curr->next;
-		delete curr->prev; curr->prev = nullptr;
 
+		delete toDelete; toDelete = nullptr;
 		++deleteCount;
 	}
 
@@ -161,4 +164,28 @@ void ScreenManager::clear()
 	m_first = nullptr;
 	m_last = nullptr;
 	m_count = 0;
+}
+
+void ScreenManager::print() const
+{
+	Screen* curr_screen = m_first;
+	size_t curr_count = 0;
+
+	if (m_count == 0)
+	{
+		std::cout << "Screens list is empty!" << std::endl;
+		return;
+	}
+
+	std::cout << "List of Screens (count=" << m_count << "):" << std::endl;
+
+	while (curr_screen)
+	{
+		std::cout << curr_count << "> " << "owner: id=" << curr_screen->owner->id << " addr=[" << curr_screen->owner << "]" << std::endl;
+
+		curr_screen = curr_screen->next;
+		++curr_count;
+	}
+
+	std::cout << std::endl;
 }

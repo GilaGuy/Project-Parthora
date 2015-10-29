@@ -225,6 +225,29 @@ void onDisconnect(Client* c)
 
 int main(int argc, char const *argv[])
 {
+	/* // Screen & Client Manager test
+	ScreenManager sm;
+	ClientManager cm(&sm);
+	Screen* curr = nullptr;
+	bool success;
+
+	cm.add(new Client());
+	cm.add(new Client());
+	cm.add(new Client());
+
+	sm.print();
+
+	success = sm.rem(1);
+
+	sm.print();
+
+	sm.clear();
+
+	sm.print();
+
+	return getc(stdin);
+	*/
+
 	if (argc > 1)
 	{
 		GameSettings::serverPort = stoul(argv[1]);
