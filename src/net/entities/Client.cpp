@@ -53,6 +53,11 @@ ClientManager::ClientManager(ScreenManager* screenList) :
 
 ClientManager::~ClientManager()
 {
+	if (screens)
+	{
+		screens->clear();
+	}
+
 	clear();
 }
 
@@ -63,8 +68,9 @@ void ClientManager::setScreenList(ScreenManager* screenList)
 	if (screens)
 	{
 		screens->clear();
-		clear();
 	}
+
+	clear();
 
 	screens = screenList;
 }

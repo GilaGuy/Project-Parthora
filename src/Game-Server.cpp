@@ -156,7 +156,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 
 					client->screenCurrent = targetScreen;
 
-					///*
+					/*
 					// the target screen is now our current screen, so we remove it from our list of ESO
 					for (Client::screen_iterator it = client->externalScreenOccupancies.begin();
 					it != client->externalScreenOccupancies.end();)
@@ -171,7 +171,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 							++it;
 						}
 					}
-					//*/
+					*/
 				}
 			}
 		}
@@ -233,7 +233,7 @@ int main(int argc, char const *argv[])
 
 	sm.print();
 
-	return getc(stdin);
+	return getchar();
 	*/
 
 	if (argc > 1)
@@ -260,8 +260,8 @@ int main(int argc, char const *argv[])
 	cout << endl;
 
 	cout << "Server running on..." << GameSettings::toString() << endl;
-	cout << "Enter k to kill the server" << endl;
-	cout << endl;
+	cout << "Enter k to kill the server!" << endl;
+	cout << std::string(80, '-');
 
 	while (getchar() != 'k');
 
