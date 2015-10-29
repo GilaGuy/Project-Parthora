@@ -15,7 +15,6 @@
 
 #include "Server.h"
 #include "../Protocol.h"
-#include "../entities/Client.h"
 
 #include <iostream>
 #include <iomanip>
@@ -31,17 +30,19 @@ void Server::send(Packet p, Client* c)
 }
 
 Server::Server() :
-	is_running(false),
-	thread_running(false),
+	clients(new ClientManager()),
 	serverThread(&Server::receiveThread, this),
 	callbackOnConnect(nullptr),
 	callbackOnReceive(nullptr),
-	callbackOnDisconnect(nullptr)
+	callbackOnDisconnect(nullptr),
+	is_running(false),
+	thread_running(false)
 {}
 
 Server::~Server()
 {
 	stop();
+	delete clients;
 }
 
 void Server::setConnectHandler(std::function<void(Client*)> onConnect)
@@ -78,24 +79,8 @@ void Server::stop()
 
 	if (thread_running) return;
 
-	for (ClientListIter it = clients.begin(); it != clients.end();)
-	{
-		it = killClient(it);
-	}
-
 	selector.clear();
-	clients.clear();
-}
-
-Server::ClientListIter Server::killClient(ClientListIter it_c)
-{
-	Client* c = (*it_c);
-
-	selector.remove(c->socket);
-	c->socket.disconnect();
-	delete c; c = nullptr;
-
-	return clients.erase(it_c);
+	clients->clear();
 }
 
 bool Server::isRunning()
@@ -114,26 +99,26 @@ void Server::receiveThread()
 		{
 			if (selector.isReady(listener)) // new connections
 			{
-				Client* client = new Client();
-				if (listener.accept(client->socket) == sf::Socket::Done)
-				{
-					clients.push_back(client);
-					selector.add(client->socket);
+				Client* newClient = clients->add();
 
-					callbackOnConnect(client);
+				if (listener.accept(newClient->socket) == sf::Socket::Done)
+				{
+					selector.add(newClient->socket);
+
+					callbackOnConnect(newClient);
 				}
 				else
 				{
-					delete client;
+					clients->rem(newClient);
 				}
 			}
 			else // other events (data receive / client disconnects)
 			{
-				ClientListIter it_c = clients.begin(); Client* c;
+				ClientManager::ListIter it = clients->getList().begin(); Client* c;
 
-				while (it_c != clients.end())
+				while (it != clients->getList().end())
 				{
-					c = (*it_c);
+					c = *it;
 
 					if (selector.isReady(c->socket))
 					{
@@ -147,18 +132,19 @@ void Server::receiveThread()
 							p.decode(buffer, received);
 							callbackOnReceive(p, c);
 
-							++it_c;
+							++it;
 						}
 						else
 						{
 							callbackOnDisconnect(c);
 
-							it_c = killClient(it_c);
+							selector.remove(c->socket);
+							it = clients->rem(it);
 						}
 					}
 					else
 					{
-						++it_c;
+						++it;
 					}
 				}
 			}

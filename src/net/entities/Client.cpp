@@ -14,10 +14,6 @@
  *             Includes the ClientManager to manage a set of clients.
  */
 
- // @TODO: Make ClientManager be used in Server instead of their own vector of Clients.
- //        Then, there'll only be 1 container of Clients instead of 2 (in Server & ClientManager).
- //        Note to self: Don't forget to move the memory management from Server to ClientManager.
-
 #include "Client.h"
 
 #include "Screen.h"
@@ -32,7 +28,7 @@ bool Client::remESO(Screen* screenToRemove)
 		{
 			if (*it == screenToRemove)
 			{
-				it = externalScreenOccupancies.erase(it);
+				externalScreenOccupancies.erase(it);
 				return true;
 			}
 			else
@@ -45,7 +41,7 @@ bool Client::remESO(Screen* screenToRemove)
 	return false;
 }
 
-ClientID ClientManager::clientID = 0;
+ClientID ClientManager::ID_CLIENT = 0;
 
 ClientManager::ClientManager() :
 	screens(nullptr)
@@ -56,36 +52,92 @@ ClientManager::ClientManager(ScreenManager* screenList) :
 {}
 
 ClientManager::~ClientManager()
-{}
+{
+	clear();
+}
 
 void ClientManager::setScreenList(ScreenManager* screenList)
 {
+	if (!screenList) return;
+
+	if (screens)
+	{
+		screens->clear();
+		clear();
+	}
+
 	screens = screenList;
 }
 
-void ClientManager::add(Client* client)
+Client* ClientManager::add()
 {
-	if (!screens || !client) return;
+	if (!screens) return nullptr;
 
+	Client* newClient = *clients.insert(new Client()).first;
 	Screen* newScreen = screens->add();
 
-	newScreen->owner = client;
+	newScreen->owner = newClient;
 
-	client->id = ++clientID;
-	client->screenOwned = newScreen;
-	client->screenCurrent = client->screenOwned;
+	newClient->id = ID_CLIENT++;
+	newClient->screenOwned = newScreen;
+	newClient->screenCurrent = newClient->screenOwned;
+
+	return newClient;
 }
 
-void ClientManager::rem(Client* client)
+bool ClientManager::rem(ClientID id)
 {
-	for (ClientListIter it = clients.begin(); it != clients.end();)
+	for (ListIter it = clients.begin(); it != clients.end();)
 	{
-		if (*it == client)
+		if ((*it)->id == id)
 		{
-			clients.erase(it);
-			return;
+			rem(it);
+			return true;
+		}
+		else
+		{
+			++it;
 		}
 	}
+
+	return false;
+}
+
+bool ClientManager::rem(Client* c)
+{
+	for (ListIter it = clients.begin(); it != clients.end();)
+	{
+		if (*it == c)
+		{
+			rem(it);
+			return true;
+		}
+		else
+		{
+			++it;
+		}
+	}
+
+	return false;
+}
+
+ClientManager::ListIter ClientManager::rem(ListIter it)
+{
+	Client* toRemove = *it;
+
+	// remove the screen that the disconnected client owns from other clients' ESOs
+	remESOs(toRemove->screenOwned);
+
+	// delete the screen owned by the client that disconnected
+	screens->rem(toRemove->id);
+
+	// disconnect its socket
+	toRemove->socket.disconnect();
+
+	// finally delete the client object
+	delete toRemove; toRemove = nullptr;
+
+	return clients.erase(it);
 }
 
 size_t ClientManager::remESOs(Screen* screenToRemove)
@@ -102,5 +154,7 @@ size_t ClientManager::remESOs(Screen* screenToRemove)
 
 void ClientManager::clear()
 {
+	for (ListIter it = clients.begin(); it != clients.end();) it = rem(it);
+
 	clients.clear();
 }

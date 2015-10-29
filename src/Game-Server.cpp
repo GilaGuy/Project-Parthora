@@ -26,13 +26,10 @@
 using namespace std;
 
 ScreenManager screens;
-ClientManager clients;
 
 void onConnect(Client* c)
 {
 	cout << "Client " << c->id << " [" << c->socket.getRemoteAddress() << "] " << "connected!" << endl;
-
-	clients.add(c);
 }
 
 void onReceive(const Packet& receivedPacket, Client* c)
@@ -166,7 +163,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 					{
 						if (*it == targetScreen)
 						{
-							it = client->externalScreenOccupancies.erase(it);
+							client->externalScreenOccupancies.erase(it);
 							return;
 						}
 						else
@@ -212,15 +209,6 @@ void onDisconnect(Client* c)
 			Server::send(playerDeletePacket, s->owner);
 		}
 	}
-
-	// remove the screen that the disconnected client owns from other clients' ESOs
-	cout << "Client " << c->id << " > " << "Removed " << clients.remESOs(c->screenOwned) << " ESOs." << endl;
-
-	// delete the screen owned by the client that disconnected
-	screens.rem(c->id);
-
-	// remove client from the client list
-	clients.rem(c);
 }
 
 int main(int argc, char const *argv[])
@@ -259,7 +247,7 @@ int main(int argc, char const *argv[])
 	server.setReceiveHandler(onReceive);
 	server.setDisconnectHandler(onDisconnect);
 
-	clients.setScreenList(&screens);
+	server.getClientManager().setScreenList(&screens);
 
 	if (!server.start(GameSettings::serverPort))
 	{

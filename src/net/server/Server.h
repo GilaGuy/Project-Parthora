@@ -5,13 +5,13 @@
 #include <SFML/Network.hpp>
 #include <SFML/System.hpp>
 #include "../Packet.h"
+#include "../entities/Client.h"
 
 struct Client;
+class ClientManager;
 
 class Server
 {
-	typedef std::vector<Client*>::iterator ClientListIter;
-
 public:
 	static void send(Packet p, Client* c);
 
@@ -25,7 +25,8 @@ public:
 	bool start(unsigned short port);
 	void stop();
 
-	ClientListIter killClient(ClientListIter it_c);
+	inline ClientManager& getClientManager() { return *clients; }
+	inline ClientManager::List& getClients() { return clients->getList(); }
 
 	bool isRunning();
 
@@ -34,7 +35,7 @@ private:
 
 	sf::TcpListener listener;
 	sf::SocketSelector selector;
-	std::vector<Client*> clients;
+	ClientManager* clients;
 	sf::Thread serverThread;
 	std::function<void(Client*)> callbackOnConnect;
 	std::function<void(const Packet&, Client*)> callbackOnReceive;

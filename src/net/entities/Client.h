@@ -27,25 +27,28 @@ struct Client
 
 class ClientManager
 {
-	typedef std::set<Client*> ClientList;
-	typedef ClientList::iterator ClientListIter;
-
 public:
+	typedef std::set<Client*> List;
+	typedef List::iterator ListIter;
+
 	ClientManager();
 	ClientManager(ScreenManager* screenList);
 	~ClientManager();
 
 	void setScreenList(ScreenManager* screenList);
-	void add(Client* client);
-	void rem(Client* client);
+	Client* add();
+	inline List& getList() { return clients; }
+	bool rem(ClientID id);
+	bool rem(Client* c);
+	ListIter rem(ListIter it);
 	size_t remESOs(Screen* screenToRemove);
 	void clear();
 
 private:
-	static ClientID clientID;
+	static ClientID ID_CLIENT;
 
 	ScreenManager* screens;
-	ClientList clients;
+	List clients;
 };
 
 #endif /* CLIENT_H */

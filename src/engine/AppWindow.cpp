@@ -247,10 +247,8 @@ void AppWindow::run() {
 					{
 						if (*it == event.type)
 						{
-							it = eventTypesToIgnoreOnce.erase(it);
-
+							eventTypesToIgnoreOnce.erase(it);
 							skipCurrentEvent = true;
-
 							break;
 						}
 						else

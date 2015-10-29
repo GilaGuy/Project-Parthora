@@ -25,21 +25,22 @@ struct Player
 
 class PlayerManager
 {
-	typedef std::set<Player*> PlayerList;
-	typedef PlayerList::iterator PlayerListIter;
-
 public:
+	typedef std::set<Player*> List;
+	typedef List::iterator ListIter;
+
 	PlayerManager();
 	~PlayerManager();
 
 	Player* add(ClientID id, std::string name, Player::ParticleSystemType pst, const sf::Font& font);
 	Player* get(ClientID id);
-	inline PlayerList getList() { return players; }
+	inline List& getList() { return players; }
 	bool rem(ClientID id);
+	ListIter rem(ListIter it);
 	void clear();
 
 private:
-	PlayerList players;
+	List players;
 };
 
 #endif /* PLAYER_H */

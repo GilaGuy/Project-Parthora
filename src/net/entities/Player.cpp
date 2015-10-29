@@ -41,7 +41,9 @@ PlayerManager::PlayerManager()
 {}
 
 PlayerManager::~PlayerManager()
-{}
+{
+	clear();
+}
 
 Player* PlayerManager::add(ClientID id, std::string name, Player::ParticleSystemType pst, const sf::Font& font)
 {
@@ -105,16 +107,11 @@ Player* PlayerManager::get(ClientID id)
 
 bool PlayerManager::rem(ClientID id)
 {
-	for (PlayerListIter it = players.begin(); it != players.end();)
+	for (ListIter it = players.begin(); it != players.end();)
 	{
 		if ((*it)->id == id)
 		{
-			delete (*it)->ps; (*it)->ps = nullptr;
-			delete (*it); //(*it) = nullptr;
-
-			it = players.erase(it);
-
-			std::cout << "Player removed! ID: " << id << std::endl;
+			rem(it);
 			return true;
 		}
 		else
@@ -127,13 +124,22 @@ bool PlayerManager::rem(ClientID id)
 	return false;
 }
 
+PlayerManager::ListIter PlayerManager::rem(ListIter it)
+{
+	Player* toRemove = *it;
+	ClientID id = toRemove->id;
+
+	delete toRemove->ps; toRemove->ps = nullptr;
+	delete toRemove; toRemove = nullptr;
+
+	std::cout << "Player removed! ID: " << id << std::endl;
+
+	return players.erase(it);
+}
+
 void PlayerManager::clear()
 {
-	for (Player* player : players)
-	{
-		delete player->ps; player->ps = nullptr;
-		delete player; player = nullptr;
-	}
+	for (ListIter it = players.begin(); it != players.end();) it = rem(it);
 
 	players.clear();
 }
