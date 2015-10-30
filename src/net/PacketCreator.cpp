@@ -21,7 +21,7 @@ PacketCreator& PacketCreator::Get()
 }
 
 Packet PacketCreator::PlayerInfo(
-	const ClientID clientID,
+	const Client::ID clientID,
 	const ClientParams& params,
 	const Screen& playerScreen)
 {
@@ -52,7 +52,7 @@ Packet PacketCreator::PlayerMove(const sf::Vector2i delta)
 }
 
 Packet PacketCreator::PlayerNew(
-	const ClientID clientID,
+	const Client::ID clientID,
 	const Cross crossDir,
 	const float offsetX,
 	const float ratioY,
@@ -74,7 +74,7 @@ Packet PacketCreator::PlayerNew(
 	return p;
 }
 
-Packet PacketCreator::PlayerDel(const ClientID clientID)
+Packet PacketCreator::PlayerDel(const Client::ID clientID)
 {
 	Packet p;
 	p.type = PLAYER_DEL;

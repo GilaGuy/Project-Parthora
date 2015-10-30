@@ -74,8 +74,8 @@ void GameScene::onload()
 	updateViews();
 	conn.send(PacketCreator::Get().PlayerMove(center));
 
-	// reset my name to indicate no player info update yet
-	me->setName("UNCONNECTED");
+	// make it as if we haven't connected yet to indicate when the server has talked back to us
+	onDisconnect();
 }
 
 void GameScene::unload()
@@ -304,7 +304,7 @@ void GameScene::onReceive(const Packet& receivedPacket)
 	{
 	case PLAYER_INFO:
 	{
-		ClientID id = receivedPacket.get<ClientID>(0);
+		Client::ID id = receivedPacket.get<Client::ID>(0);
 		Player* player = nullptr;
 
 		if (id == Client::MYSELF) player = me;
@@ -322,7 +322,7 @@ void GameScene::onReceive(const Packet& receivedPacket)
 
 	case PLAYER_NEW:
 	{
-		Player* newPlayer = players.add(receivedPacket.get<ClientID>(0), receivedPacket.get(4), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
+		Player* newPlayer = players.add(receivedPacket.get<Client::ID>(0), receivedPacket.get(4), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
 		if (newPlayer->id == Client::MYSELF) me = newPlayer;
 
 		switch (static_cast<Cross>(receivedPacket.get<int>(1)))
@@ -343,13 +343,13 @@ void GameScene::onReceive(const Packet& receivedPacket)
 
 	case PLAYER_DEL:
 	{
-		players.rem(receivedPacket.get<ClientID>(0));
+		players.rem(receivedPacket.get<Client::ID>(0));
 	}
 	break;
 
 	case PLAYER_MOVE:
 	{
-		Player* player = players.get(receivedPacket.get<ClientID>(2));
+		Player* player = players.get(receivedPacket.get<Client::ID>(2));
 		if (player)
 		{
 			player->ps->emitterPos.x += receivedPacket.get<float>(0);

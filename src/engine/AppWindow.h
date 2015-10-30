@@ -73,4 +73,4 @@ private:
 	Scene::Ptr m_emptyScene;
 };
 
-#endif /* APPWINDOW_H */
+#endif // APPWINDOW_H

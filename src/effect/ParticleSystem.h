@@ -107,4 +107,4 @@ private:
 	};
 };
 
-#endif /* PARTICLESYSTEM_H */
+#endif // PARTICLESYSTEM_H

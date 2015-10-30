@@ -2,7 +2,8 @@
 #define PLAYER_H
 
 #include <set>
-#include "../Protocol.h"
+#include "../Shared.h"
+#include "../entities/Client.h"
 #include "../../core/object/TGO.h"
 
 class ParticleSystem;
@@ -18,7 +19,7 @@ struct Player
 	ClientParams extractClientParams() const;
 	void setName(std::string name);
 
-	ClientID id;
+	Client::ID id;
 	ParticleSystem* ps;
 	TGO label;
 };
@@ -32,10 +33,10 @@ public:
 	PlayerManager();
 	~PlayerManager();
 
-	Player* add(ClientID id, std::string name, Player::ParticleSystemType pst, const sf::Font& font);
-	Player* get(ClientID id);
+	Player* add(Client::ID id, std::string name, Player::ParticleSystemType pst, const sf::Font& font);
+	Player* get(Client::ID id);
 	inline List& getList() { return players; }
-	bool rem(ClientID id);
+	bool rem(Client::ID id);
 	ListIter rem(ListIter it);
 	void clear();
 
@@ -43,4 +44,4 @@ private:
 	List players;
 };
 
-#endif /* PLAYER_H */
+#endif // PLAYER_H

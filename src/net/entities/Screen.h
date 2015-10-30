@@ -1,7 +1,8 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
-#include "../Protocol.h"
+#include "../Shared.h"
+#include "Client.h"
 
 struct Client;
 
@@ -27,8 +28,8 @@ public:
 	Screen* add();
 	Screen* getFirst();
 	Screen* getLast();
-	Screen* get(ClientID ownerID);
-	bool rem(ClientID ownerID);
+	Screen* get(Client::ID ownerID);
+	bool rem(Client::ID ownerID);
 	size_t count() const;
 	void clear();
 	void print() const;
@@ -39,4 +40,4 @@ private:
 	size_t m_count;
 };
 
-#endif /* SCREEN_H */
+#endif // SCREEN_H

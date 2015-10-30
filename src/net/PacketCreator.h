@@ -1,8 +1,9 @@
 #ifndef PACKETCREATOR_H
 #define PACKETCREATOR_H
 
-#include "Protocol.h"
+#include "Shared.h"
 #include "Packet.h"
+#include "entities/Client.h"
 #include "entities/Screen.h"
 
 class PacketCreator
@@ -12,7 +13,7 @@ public:
 
 	Packet PlayerInfo
 		(
-			const ClientID clientID,
+			const Client::ID clientID,
 			const ClientParams& params,
 			const Screen& playerScreen
 			);
@@ -21,14 +22,14 @@ public:
 
 	Packet PlayerNew
 		(
-			const ClientID clientID,
+			const Client::ID clientID,
 			const Cross crossDir,
 			const float offsetX,
 			const float ratioY,
 			const ClientParams& params
 			);
 
-	Packet PlayerDel(const ClientID clientID);
+	Packet PlayerDel(const Client::ID clientID);
 
 private:
 	PacketCreator() {}

@@ -14,7 +14,7 @@
  */
 
 #include "Server.h"
-#include "../Protocol.h"
+#include "../Shared.h"
 
 #include <iostream>
 #include <iomanip>

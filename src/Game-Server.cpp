@@ -15,7 +15,7 @@
 
 #include <map>
 #include "net/server/Server.h"
-#include "net/Protocol.h"
+#include "net/Shared.h"
 #include "net/PacketCreator.h"
 #include "net/entities/Client.h"
 #include "net/entities/Screen.h"

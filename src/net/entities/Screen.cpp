@@ -17,7 +17,6 @@
 
 #include <assert.h>
 #include <iostream>
-#include "Client.h"
 
 Cross Screen::checkBeyondBoundaries(sf::Vector2f coords) const
 {
@@ -101,7 +100,7 @@ Screen* ScreenManager::getLast()
 	return m_last;
 }
 
-Screen* ScreenManager::get(ClientID ownerID)
+Screen* ScreenManager::get(Client::ID ownerID)
 {
 	Screen* curr = m_first;
 
@@ -115,7 +114,7 @@ Screen* ScreenManager::get(ClientID ownerID)
 	return nullptr;
 }
 
-bool ScreenManager::rem(ClientID ownerID)
+bool ScreenManager::rem(Client::ID ownerID)
 {
 	Screen* toRemove = get(ownerID);
 

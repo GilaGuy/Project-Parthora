@@ -1,13 +1,23 @@
-#ifndef PROTOCOL_H
-#define PROTOCOL_H
+/**
+ * Shared Client/Server things.
+ *
+ * @date       April 18, 2015
+ *
+ * @revisions
+ *
+ * @designer   Melvin Loho
+ *
+ * @programmer Melvin Loho
+ *
+ * @notes      This file contains all of the things that both the clients and servers use.
+**/
 
-#include <SFML/Graphics.hpp>
+#ifndef NET_SHARED_H
+#define NET_SHARED_H
 
-// TYPEDEFS --------------------------------------------------------------------
-
-typedef sf::Uint16 ClientID;
-
-//-----------------------------------------------------------------------------<
+#include <string>
+#include <SFML/Graphics/Color.hpp>
+#include <SFML/System/Vector2.hpp>
 
 // ENUMS -----------------------------------------------------------------------
 
@@ -46,4 +56,4 @@ struct ClientParams
 
 //-----------------------------------------------------------------------------<
 
-#endif // PROTOCOL_H
+#endif // NET_SHARED_H

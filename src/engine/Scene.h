@@ -72,4 +72,4 @@ std::shared_ptr<S> Scene::Create(AppWindow &window, const std::string &name) {
 	return ptr;
 }
 
-#endif /* SCENE_H */
+#endif // SCENE_H

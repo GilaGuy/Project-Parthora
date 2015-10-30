@@ -45,4 +45,4 @@ private:
 	sf::Music bgm;
 };
 
-#endif /* GAMESCENE_H */
+#endif // GAMESCENE_H

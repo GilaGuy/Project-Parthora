@@ -3,16 +3,18 @@
 
 #include <set>
 #include <SFML/Network.hpp>
-#include "../Protocol.h"
+#include "../Shared.h"
 
 struct Screen;
 class ScreenManager;
 
 struct Client
 {
+	typedef sf::Uint16 ID;
+
 	typedef std::set<Screen*>::iterator screen_iterator;
 
-	static const ClientID MYSELF = 0;
+	static const ID MYSELF = 0;
 
 	bool remESO(Screen* screenToRemove);
 
@@ -21,7 +23,7 @@ struct Client
 	Screen *screenOwned, *screenCurrent;
 	std::set<Screen*> externalScreenOccupancies;
 
-	ClientID id;
+	ID id;
 	ClientParams params;
 };
 
@@ -38,17 +40,17 @@ public:
 	void setScreenList(ScreenManager* screenList);
 	Client* add();
 	inline List& getList() { return clients; }
-	bool rem(ClientID id);
+	bool rem(Client::ID id);
 	bool rem(Client* c);
 	ListIter rem(ListIter it);
 	size_t remESOs(Screen* screenToRemove);
 	void clear();
 
 private:
-	static ClientID ID_CLIENT;
+	static Client::ID ID_CLIENT;
 
 	ScreenManager* screens;
 	List clients;
 };
 
-#endif /* CLIENT_H */
+#endif // CLIENT_H

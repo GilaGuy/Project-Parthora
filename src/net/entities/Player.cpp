@@ -45,7 +45,7 @@ PlayerManager::~PlayerManager()
 	clear();
 }
 
-Player* PlayerManager::add(ClientID id, std::string name, Player::ParticleSystemType pst, const sf::Font& font)
+Player* PlayerManager::add(Client::ID id, std::string name, Player::ParticleSystemType pst, const sf::Font& font)
 {
 	Player* newPlayer = nullptr;
 
@@ -92,7 +92,7 @@ Player* PlayerManager::add(ClientID id, std::string name, Player::ParticleSystem
 	return newPlayer;
 }
 
-Player* PlayerManager::get(ClientID id)
+Player* PlayerManager::get(Client::ID id)
 {
 	for (Player* player : players)
 	{
@@ -105,7 +105,7 @@ Player* PlayerManager::get(ClientID id)
 	return nullptr;
 }
 
-bool PlayerManager::rem(ClientID id)
+bool PlayerManager::rem(Client::ID id)
 {
 	for (ListIter it = players.begin(); it != players.end();)
 	{
@@ -127,7 +127,7 @@ bool PlayerManager::rem(ClientID id)
 PlayerManager::ListIter PlayerManager::rem(ListIter it)
 {
 	Player* toRemove = *it;
-	ClientID id = toRemove->id;
+	Client::ID id = toRemove->id;
 
 	delete toRemove->ps; toRemove->ps = nullptr;
 	delete toRemove; toRemove = nullptr;

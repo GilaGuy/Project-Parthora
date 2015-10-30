@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "Protocol.h"
+#include "Shared.h"
 
 struct Packet
 {

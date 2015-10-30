@@ -41,7 +41,7 @@ bool Client::remESO(Screen* screenToRemove)
 	return false;
 }
 
-ClientID ClientManager::ID_CLIENT = 0;
+Client::ID ClientManager::ID_CLIENT = 0;
 
 ClientManager::ClientManager() :
 	screens(nullptr)
@@ -91,7 +91,7 @@ Client* ClientManager::add()
 	return newClient;
 }
 
-bool ClientManager::rem(ClientID id)
+bool ClientManager::rem(Client::ID id)
 {
 	for (ListIter it = clients.begin(); it != clients.end();)
 	{

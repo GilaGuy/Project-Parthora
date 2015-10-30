@@ -37,4 +37,4 @@ private:
 	sf::Shader shader_shake;
 };
 
-#endif /* PS_FIREBALL_H */
+#endif // PS_FIREBALL_H
