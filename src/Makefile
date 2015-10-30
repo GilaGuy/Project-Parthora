@@ -5,16 +5,18 @@ SERVER_EXE=ProjectParthoraServer
 
 ## FILES
 
-FILES_COMMON=	GameSettings.o \
-				net/Packet.o				
+FILES_COMMON=	net/entities/Client.o net/entities/Screen.o \
+				net/Packet.o net/PacketCreator.o net/Shared.o \
+				GameSettings.o
 
 FILES_CLIENT=	core/object/BGO.o core/object/SGO.o core/object/TGO.o \
 				core/Renderer.o \
+				effect/impl/Fireball.o \
 				effect/ParticleSystem.o \
 				engine/AppWindow.o engine/Scene.o \
-				graphics/Fireball.o \
 				net/client/Connection.o \
-				scenes/ParticleSystemPlayground.o \
+				net/entities/Player.o \
+				scenes/GameScene.o \
 				Game.o
 
 FILES_SERVER=	net/server/Server.o \
@@ -22,7 +24,7 @@ FILES_SERVER=	net/server/Server.o \
 
 ## Targets
 
-all: server client
+all: client server
 
 client: $(FILES_COMMON) $(FILES_CLIENT)
 	$(CXX) $(CPPFLAGS) \
