@@ -26,3 +26,8 @@
 *.exe
 *.out
 *.app
+
+# Linux files
+ProjectParthora
+ProjectParthoraServer
+.fuse_hidden*

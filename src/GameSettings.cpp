@@ -1,7 +1,7 @@
 #include "GameSettings.h"
 
 std::string GameSettings::serverIP = "localhost";
-unsigned short GameSettings::serverPort = 12345;
+unsigned short GameSettings::serverPort = 42424;
 
 std::string GameSettings::toString()
 {

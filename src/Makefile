@@ -1,12 +1,12 @@
 CXX=g++
-CPPFLAGS=-std=c++11 -g
+CPPFLAGS=-std=c++11
 CLIENT_EXE=ProjectParthora
 SERVER_EXE=ProjectParthoraServer
 
 ## FILES
 
 FILES_COMMON=	net/entities/Client.o net/entities/Screen.o \
-				net/Packet.o net/PacketCreator.o net/Shared.o \
+				net/Packet.o net/PacketCreator.o \
 				GameSettings.o
 
 FILES_CLIENT=	core/object/BGO.o core/object/SGO.o core/object/TGO.o \
@@ -41,4 +41,9 @@ server: $(FILES_COMMON) $(FILES_SERVER)
 
 clean:
 	find . -name "*.o" -type f -delete
+	find . -name ".fuse_hidden*" -type f -delete
+
+cleanall:
+	find . -name "*.o" -type f -delete
+	find . -name ".fuse_hidden*" -type f -delete
 	rm -f $(CLIENT_EXE) $(SERVER_EXE)

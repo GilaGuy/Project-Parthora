@@ -180,13 +180,18 @@ unsigned int ParticleBuilders::PbSprite::build(const ParticleSystem &ps, const u
 			const sf::Vector2f& pos = m_particles[p].pos;
 			const sf::Color& color = m_particles[p].clr;
 			const sf::Vector2f& size = (m_particles[p].lifetime / ps.lifeTimeMax) * ps.m_spriteHalfSize;
+			sf::Vertex *duplicateVertex1, *duplicateVertex2;
 
 			/* 0 */ setVertex(m_vertices[m_vertexCount++], pos.x - size.x, pos.y - size.y, 0.f, 0.f, color);
-			/* 1 */ setVertex(m_vertices[m_vertexCount++], pos.x - size.x, pos.y + size.y, 0.f, ps.m_textureSize.y, color);
-			/* 2 */ setVertex(m_vertices[m_vertexCount++], pos.x + size.x, pos.y - size.y, ps.m_textureSize.x, 0.f, color);
 
-			/* 1 */ m_vertices[m_vertexCount++] = m_vertices[m_vertexCount - 2];
-			/* 2 */ m_vertices[m_vertexCount++] = m_vertices[m_vertexCount - 2];
+			duplicateVertex1 = &m_vertices[m_vertexCount++];
+			duplicateVertex2 = &m_vertices[m_vertexCount++];
+
+			/* 1 */ setVertex(*duplicateVertex1, pos.x - size.x, pos.y + size.y, 0.f, ps.m_textureSize.y, color);
+			/* 2 */ setVertex(*duplicateVertex2, pos.x + size.x, pos.y - size.y, ps.m_textureSize.x, 0.f, color);
+
+			/* 1 */ m_vertices[m_vertexCount++] = *duplicateVertex1;
+			/* 2 */ m_vertices[m_vertexCount++] = *duplicateVertex2;
 			/* 3 */ setVertex(m_vertices[m_vertexCount++], pos.x + size.x, pos.y + size.y, ps.m_textureSize.x, ps.m_textureSize.y, color);
 		}
 	}
