@@ -38,14 +38,20 @@ void onReceive(const Packet& receivedPacket, Client* c)
 	{
 	case PLAYER_INFO:
 	{
+		// sync params
 		c->params.name = receivedPacket.get(1);
 		c->params.pp.colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(2));
 		c->params.pp.colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(3));
 
+		// sync screen sizes/boundaries
 		c->screenOwned->size.x = receivedPacket.get<unsigned int>(4);
 		c->screenOwned->size.y = receivedPacket.get<unsigned int>(5);
 		c->screenOwned->boundaryLeft = c->screenOwned->size.x * 0.125f;
 		c->screenOwned->boundaryRight = c->screenOwned->size.x - c->screenOwned->boundaryLeft;
+
+		// center the emitter's position
+		c->params.emitterPos.x = c->screenOwned->size.x * 0.5f;
+		c->params.emitterPos.y = c->screenOwned->size.y * 0.5f;
 
 		Packet playerInfoPacket = receivedPacket;
 

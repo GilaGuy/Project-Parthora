@@ -54,16 +54,24 @@ void GameScene::onload()
 		cerr << "Failed to connect to the server!" << endl;
 	}
 
-	// create my particle
+	// create my player
 	me = players.add(Client::MYSELF, sf::IpAddress::getLocalAddress().toString(), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
 
-	// center mouse and uncontrol the particle
+	// uncontrol the particle
+	setControlParticle(isControllingParticle = false);
+
+	// center the player
 
 	sf::Vector2i center = sf::Vector2i(view_main.getCenter());
 
-	getWindow().setMousePosition(sf::Vector2i(center));
+	me->ps->emitterPos.x = center.x;
+	me->ps->emitterPos.y = center.y;
 
-	setControlParticle(isControllingParticle = false);
+	// update views
+	updateViews();
+
+	// make it as if we haven't connected yet to indicate when the server has talked back to us
+	onDisconnect();
 
 	// music settings
 
@@ -71,14 +79,6 @@ void GameScene::onload()
 	bgm.setPosition(center.x, center.y, 0);
 	bgm.setMinDistance(1000);
 	bgm.setLoop(true);
-
-	// update views, send the playerinfo packet to the server, and center the player
-
-	updateViews();
-	conn.send(PacketCreator::Get().PlayerMove(center));
-
-	// make it as if we haven't connected yet to indicate when the server has talked back to us
-	onDisconnect();
 }
 
 void GameScene::unload()
