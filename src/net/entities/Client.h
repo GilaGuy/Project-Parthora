@@ -10,11 +10,9 @@ class ScreenManager;
 
 struct Client
 {
-	typedef sf::Uint16 ID;
-
 	typedef std::set<Screen*>::iterator screen_iterator;
 
-	static const ID MYSELF = 0;
+	static const EntityID MYSELF = 0;
 
 	bool remESO(Screen* screenToRemove);
 
@@ -23,7 +21,7 @@ struct Client
 	Screen *screenOwned, *screenCurrent;
 	std::set<Screen*> externalScreenOccupancies;
 
-	ID id;
+	EntityID id;
 	ClientParams params;
 };
 
@@ -40,14 +38,14 @@ public:
 	void setScreenList(ScreenManager* screenList);
 	Client* add();
 	inline List& getList() { return clients; }
-	bool rem(Client::ID id);
+	bool rem(EntityID id);
 	bool rem(Client* c);
 	ListIter rem(ListIter it);
 	size_t remESOs(Screen* screenToRemove);
 	void clear();
 
 private:
-	static Client::ID ID_CLIENT;
+	static EntityID ID_ENTITY;
 
 	ScreenManager* screens;
 	List clients;

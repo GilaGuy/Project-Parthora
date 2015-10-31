@@ -2,7 +2,6 @@
 #define SCREEN_H
 
 #include "../Shared.h"
-#include "Client.h"
 
 struct Client;
 
@@ -28,8 +27,8 @@ public:
 	Screen* add();
 	Screen* getFirst();
 	Screen* getLast();
-	Screen* get(Client::ID ownerID);
-	bool rem(Client::ID ownerID);
+	Screen* get(EntityID ownerID);
+	bool rem(EntityID ownerID);
 	size_t count() const;
 	void clear();
 	void print() const;

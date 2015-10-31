@@ -1,10 +1,9 @@
 #ifndef PACKETCREATOR_H
 #define PACKETCREATOR_H
 
-#include "Shared.h"
 #include "Packet.h"
-#include "entities/Client.h"
-#include "entities/Screen.h"
+
+struct Screen;
 
 class PacketCreator
 {
@@ -13,23 +12,23 @@ public:
 
 	Packet PlayerInfo
 		(
-			const Client::ID clientID,
+			const EntityID clientID,
 			const ClientParams& params,
-			const Screen& playerScreen
+			const Screen* playerScreen
 			);
 
 	Packet PlayerMove(const sf::Vector2i delta);
 
 	Packet PlayerNew
 		(
-			const Client::ID clientID,
+			const EntityID clientID,
 			const Cross crossDir,
 			const float offsetX,
 			const float ratioY,
 			const ClientParams& params
 			);
 
-	Packet PlayerDel(const Client::ID clientID);
+	Packet PlayerDel(const EntityID clientID);
 
 private:
 	PacketCreator() {}

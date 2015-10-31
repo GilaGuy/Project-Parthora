@@ -15,6 +15,7 @@
  */
 
 #include "Player.h"
+
 #include "../../effect/ParticleSystem.h"
 #include "../../effect/impl/Fireball.h"
 
@@ -45,7 +46,7 @@ PlayerManager::~PlayerManager()
 	clear();
 }
 
-Player* PlayerManager::add(Client::ID id, std::string name, Player::ParticleSystemType pst, const sf::Font& font)
+Player* PlayerManager::add(EntityID id, std::string name, Player::ParticleSystemType pst, const sf::Font& font)
 {
 	Player* newPlayer = nullptr;
 
@@ -92,7 +93,7 @@ Player* PlayerManager::add(Client::ID id, std::string name, Player::ParticleSyst
 	return newPlayer;
 }
 
-Player* PlayerManager::get(Client::ID id)
+Player* PlayerManager::get(EntityID id)
 {
 	for (Player* player : players)
 	{
@@ -105,7 +106,7 @@ Player* PlayerManager::get(Client::ID id)
 	return nullptr;
 }
 
-bool PlayerManager::rem(Client::ID id)
+bool PlayerManager::rem(EntityID id)
 {
 	for (ListIter it = players.begin(); it != players.end();)
 	{
@@ -127,7 +128,7 @@ bool PlayerManager::rem(Client::ID id)
 PlayerManager::ListIter PlayerManager::rem(ListIter it)
 {
 	Player* toRemove = *it;
-	Client::ID id = toRemove->id;
+	EntityID id = toRemove->id;
 
 	delete toRemove->ps; toRemove->ps = nullptr;
 	delete toRemove; toRemove = nullptr;

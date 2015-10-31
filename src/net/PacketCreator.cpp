@@ -14,6 +14,8 @@
 
 #include "PacketCreator.h"
 
+#include "entities/Screen.h"
+
 PacketCreator& PacketCreator::Get()
 {
 	static PacketCreator pc;
@@ -21,9 +23,9 @@ PacketCreator& PacketCreator::Get()
 }
 
 Packet PacketCreator::PlayerInfo(
-	const Client::ID clientID,
+	const EntityID clientID,
 	const ClientParams& params,
-	const Screen& playerScreen)
+	const Screen* playerScreen)
 {
 	Packet p;
 	p.type = PLAYER_INFO;
@@ -34,8 +36,8 @@ Packet PacketCreator::PlayerInfo(
 	p.add(params.pp.colorBegin.toInteger()); //2
 	p.add(params.pp.colorEnd.toInteger()); //3
 
-	p.add(playerScreen.size.x); //4
-	p.add(playerScreen.size.y); //5
+	p.add(playerScreen->size.x); //4
+	p.add(playerScreen->size.y); //5
 
 	return p;
 }
@@ -52,7 +54,7 @@ Packet PacketCreator::PlayerMove(const sf::Vector2i delta)
 }
 
 Packet PacketCreator::PlayerNew(
-	const Client::ID clientID,
+	const EntityID clientID,
 	const Cross crossDir,
 	const float offsetX,
 	const float ratioY,
@@ -74,7 +76,7 @@ Packet PacketCreator::PlayerNew(
 	return p;
 }
 
-Packet PacketCreator::PlayerDel(const Client::ID clientID)
+Packet PacketCreator::PlayerDel(const EntityID clientID)
 {
 	Packet p;
 	p.type = PLAYER_DEL;

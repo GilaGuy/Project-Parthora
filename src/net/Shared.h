@@ -19,6 +19,12 @@
 #include <SFML/Graphics/Color.hpp>
 #include <SFML/System/Vector2.hpp>
 
+// TYPEDEFS --------------------------------------------------------------------
+
+typedef sf::Uint16 EntityID;
+
+//-----------------------------------------------------------------------------<
+
 // ENUMS -----------------------------------------------------------------------
 
 // Listed in chronological order of a simple scenario in which

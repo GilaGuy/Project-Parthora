@@ -18,15 +18,17 @@
 #include "../engine/AppWindow.h"
 #include "../net/PacketCreator.h"
 #include "../net/entities/Client.h"
-#include "../net/entities/Player.h"
+#include "../net/entities/Screen.h"
 #include "../effect/impl/Fireball.h"
 
 #include <iostream>
 
 using namespace std;
 
-GameScene::GameScene(AppWindow &window) :
-	Scene(window, "Game Scene"), renderer(window, 1000), me(nullptr)
+GameScene::GameScene(AppWindow &window) : Scene(window, "Game Scene")
+, renderer(window, 1000)
+, me(nullptr)
+, myScreen(new Screen())
 {
 	bgm.openFromFile("Data/audio/gardenparty_mono.wav");
 }
@@ -34,6 +36,7 @@ GameScene::GameScene(AppWindow &window) :
 GameScene::~GameScene()
 {
 	unload();
+	delete myScreen; myScreen = nullptr;
 }
 
 void GameScene::onload()
@@ -95,7 +98,7 @@ void GameScene::updateViews()
 	view_main.setSize(view_hud.getSize());
 	view_main.setCenter(getWindow().getSize().x * 0.5f, getWindow().getSize().y * 0.5f);
 
-	myScreen.size = getWindow().getSize();
+	myScreen->size = getWindow().getSize();
 
 	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, me->extractClientParams(), myScreen));
 
@@ -304,7 +307,7 @@ void GameScene::onReceive(const Packet& receivedPacket)
 	{
 	case PLAYER_INFO:
 	{
-		Client::ID id = receivedPacket.get<Client::ID>(0);
+		EntityID id = receivedPacket.get<EntityID>(0);
 		Player* player = nullptr;
 
 		if (id == Client::MYSELF) player = me;
@@ -322,7 +325,7 @@ void GameScene::onReceive(const Packet& receivedPacket)
 
 	case PLAYER_NEW:
 	{
-		Player* newPlayer = players.add(receivedPacket.get<Client::ID>(0), receivedPacket.get(4), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
+		Player* newPlayer = players.add(receivedPacket.get<EntityID>(0), receivedPacket.get(4), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
 		if (newPlayer->id == Client::MYSELF) me = newPlayer;
 
 		switch (static_cast<Cross>(receivedPacket.get<int>(1)))
@@ -343,13 +346,13 @@ void GameScene::onReceive(const Packet& receivedPacket)
 
 	case PLAYER_DEL:
 	{
-		players.rem(receivedPacket.get<Client::ID>(0));
+		players.rem(receivedPacket.get<EntityID>(0));
 	}
 	break;
 
 	case PLAYER_MOVE:
 	{
-		Player* player = players.get(receivedPacket.get<Client::ID>(2));
+		Player* player = players.get(receivedPacket.get<EntityID>(2));
 		if (player)
 		{
 			player->ps->emitterPos.x += receivedPacket.get<float>(0);

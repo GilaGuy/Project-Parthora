@@ -238,7 +238,7 @@ int main(int argc, char const *argv[])
 
 	if (argc > 1)
 	{
-		GameSettings::serverPort = stoul(argv[1]);
+		GameSettings::serverPort = static_cast<unsigned short>(stoul(argv[1]));
 	}
 
 	Server server;

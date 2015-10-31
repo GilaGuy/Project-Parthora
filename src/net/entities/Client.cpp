@@ -41,7 +41,7 @@ bool Client::remESO(Screen* screenToRemove)
 	return false;
 }
 
-Client::ID ClientManager::ID_CLIENT = 0;
+EntityID ClientManager::ID_ENTITY = 0;
 
 ClientManager::ClientManager() :
 	screens(nullptr)
@@ -84,14 +84,14 @@ Client* ClientManager::add()
 
 	newScreen->owner = newClient;
 
-	newClient->id = ID_CLIENT++;
+	newClient->id = ID_ENTITY++;
 	newClient->screenOwned = newScreen;
 	newClient->screenCurrent = newClient->screenOwned;
 
 	return newClient;
 }
 
-bool ClientManager::rem(Client::ID id)
+bool ClientManager::rem(EntityID id)
 {
 	for (ListIter it = clients.begin(); it != clients.end();)
 	{

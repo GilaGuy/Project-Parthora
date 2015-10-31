@@ -6,7 +6,8 @@
 #include "../core/Renderer.h"
 #include "../net/client/Connection.h"
 #include "../net/entities/Player.h"
-#include "../net/entities/Screen.h"
+
+struct Screen;
 
 class GameScene : public Scene
 {
@@ -40,7 +41,7 @@ private:
 	bool isControllingParticle;
 	PlayerManager players;
 	Player* me;
-	Screen myScreen;
+	Screen* myScreen;
 
 	sf::Music bgm;
 };
