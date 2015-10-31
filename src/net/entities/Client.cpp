@@ -21,66 +21,29 @@
 
 bool Client::remESO(Screen* screenToRemove)
 {
-	if (!externalScreenOccupancies.empty())
-	{
-		for (screen_iterator it = externalScreenOccupancies.begin();
-		it != externalScreenOccupancies.end();)
-		{
-			if (*it == screenToRemove)
-			{
-				externalScreenOccupancies.erase(it);
-				return true;
-			}
-			else
-			{
-				++it;
-			}
-		}
-	}
+	ESOListIter it = externalScreenOccupancies.find(screenToRemove);
 
-	return false;
+	if (it == externalScreenOccupancies.end()) return false;
+
+	externalScreenOccupancies.erase(it);
+	return true;
 }
 
 EntityID ClientManager::ID_ENTITY = 0;
 
-ClientManager::ClientManager() :
-	screens(nullptr)
-{}
-
-ClientManager::ClientManager(ScreenManager* screenList) :
-	screens(screenList)
+ClientManager::ClientManager()
 {}
 
 ClientManager::~ClientManager()
 {
-	if (screens)
-	{
-		screens->clear();
-	}
-
+	screens.clear();
 	clear();
-}
-
-void ClientManager::setScreenList(ScreenManager* screenList)
-{
-	if (!screenList) return;
-
-	if (screens)
-	{
-		screens->clear();
-	}
-
-	clear();
-
-	screens = screenList;
 }
 
 Client* ClientManager::add()
 {
-	if (!screens) return nullptr;
-
 	Client* newClient = *clients.insert(new Client()).first;
-	Screen* newScreen = screens->add();
+	Screen* newScreen = screens.add();
 
 	newScreen->owner = newClient;
 
@@ -111,20 +74,12 @@ bool ClientManager::rem(EntityID id)
 
 bool ClientManager::rem(Client* c)
 {
-	for (ListIter it = clients.begin(); it != clients.end();)
-	{
-		if (*it == c)
-		{
-			rem(it);
-			return true;
-		}
-		else
-		{
-			++it;
-		}
-	}
+	ListIter it = clients.find(c);
 
-	return false;
+	if (it == clients.end()) return false;
+
+	rem(it);
+	return true;
 }
 
 ClientManager::ListIter ClientManager::rem(ListIter it)
@@ -135,7 +90,7 @@ ClientManager::ListIter ClientManager::rem(ListIter it)
 	remESOs(toRemove->screenOwned);
 
 	// delete the screen owned by the client that disconnected
-	screens->rem(toRemove->id);
+	screens.rem(toRemove->id);
 
 	// disconnect its socket
 	toRemove->socket.disconnect();

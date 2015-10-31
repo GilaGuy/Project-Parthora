@@ -4,13 +4,12 @@
 #include <set>
 #include <SFML/Network.hpp>
 #include "../Shared.h"
-
-struct Screen;
-class ScreenManager;
+#include "../entities/Screen.h"
 
 struct Client
 {
-	typedef std::set<Screen*>::iterator screen_iterator;
+	typedef std::set<Screen*> ESOList;
+	typedef ESOList::iterator ESOListIter;
 
 	static const EntityID MYSELF = 0;
 
@@ -19,7 +18,7 @@ struct Client
 	sf::TcpSocket socket;
 
 	Screen *screenOwned, *screenCurrent;
-	std::set<Screen*> externalScreenOccupancies;
+	ESOList externalScreenOccupancies;
 
 	EntityID id;
 	ClientParams params;
@@ -32,10 +31,8 @@ public:
 	typedef List::iterator ListIter;
 
 	ClientManager();
-	ClientManager(ScreenManager* screenList);
 	~ClientManager();
 
-	void setScreenList(ScreenManager* screenList);
 	Client* add();
 	inline List& getList() { return clients; }
 	bool rem(EntityID id);
@@ -47,7 +44,7 @@ public:
 private:
 	static EntityID ID_ENTITY;
 
-	ScreenManager* screens;
+	ScreenManager screens;
 	List clients;
 };
 
