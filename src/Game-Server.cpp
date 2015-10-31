@@ -25,47 +25,45 @@
 
 using namespace std;
 
-ScreenManager screens;
-
 void onConnect(Client* c)
 {
 	cout << "Client " << c->id << " [" << c->socket.getRemoteAddress() << "] " << "connected!" << endl;
 }
 
-void onReceive(const Packet& receivedPacket, Client* c)
+void onReceive(const Packet& receivedPacket, Client* client)
 {
 	switch (receivedPacket.type)
 	{
 	case PLAYER_INFO:
 	{
 		// sync params
-		c->params.name = receivedPacket.get(1);
-		c->params.pp.colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(2));
-		c->params.pp.colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(3));
+		client->params.name = receivedPacket.get(1);
+		client->params.pp.colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(2));
+		client->params.pp.colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(3));
 
 		// sync screen sizes/boundaries
-		c->screenOwned->size.x = receivedPacket.get<unsigned int>(4);
-		c->screenOwned->size.y = receivedPacket.get<unsigned int>(5);
-		c->screenOwned->boundaryLeft = c->screenOwned->size.x * 0.125f;
-		c->screenOwned->boundaryRight = c->screenOwned->size.x - c->screenOwned->boundaryLeft;
+		client->screenOwned->size.x = receivedPacket.get<unsigned int>(4);
+		client->screenOwned->size.y = receivedPacket.get<unsigned int>(5);
+		client->screenOwned->boundaryLeft = client->screenOwned->size.x * 0.125f;
+		client->screenOwned->boundaryRight = client->screenOwned->size.x - client->screenOwned->boundaryLeft;
 
 		// center the emitter's position
-		c->params.emitterPos.x = c->screenOwned->size.x * 0.5f;
-		c->params.emitterPos.y = c->screenOwned->size.y * 0.5f;
+		client->params.emitterPos.x = client->screenOwned->size.x * 0.5f;
+		client->params.emitterPos.y = client->screenOwned->size.y * 0.5f;
 
 		Packet playerInfoPacket = receivedPacket;
 
 		playerInfoPacket.remLast();
 		playerInfoPacket.remLast();
 
-		Server::send(playerInfoPacket, c);
+		Server::send(playerInfoPacket, client);
 
-		// reflect packet to c's ESO
-		if (!c->externalScreenOccupancies.empty())
+		// reflect packet to client's ESO
+		if (!client->externalScreenOccupancies.empty())
 		{
-			playerInfoPacket.replace(0, Packet::ToString(c->id));
+			playerInfoPacket.replace(0, Packet::ToString(client->id));
 
-			for (Screen* s : c->externalScreenOccupancies)
+			for (Screen* s : client->externalScreenOccupancies)
 			{
 				Server::send(playerInfoPacket, s->owner);
 			}
@@ -76,7 +74,6 @@ void onReceive(const Packet& receivedPacket, Client* c)
 	case PLAYER_MOVE:
 	{
 		Screen* targetScreen;
-		Client* client = c;
 		Cross cross;
 
 		client->params.emitterPos.x += receivedPacket.get<float>(0);
@@ -86,23 +83,26 @@ void onReceive(const Packet& receivedPacket, Client* c)
 
 		if (cross == NO_CROSS) //>> if within boundaries
 		{
-			if (!client->externalScreenOccupancies.empty())
+			if (client->screenCurrent == client->screenOwned)
 			{
-				if (client->externalScreenOccupancies.size() > 1)
+				for (Screen* s : client->externalScreenOccupancies)
 				{
-					for (Screen* s : client->externalScreenOccupancies)
-					{
-						if (s != client->screenCurrent) Server::send(PacketCreator::Get().PlayerDel(client->id), s->owner);
-					}
-					client->externalScreenOccupancies.clear();
-					client->externalScreenOccupancies.insert(client->screenCurrent);
+					Server::send(PacketCreator::Get().PlayerDel(client->id), s->owner);
 				}
-				else
+				client->externalScreenOccupancies.clear();
+			}
+			else
+			{
+				for (Client::ESOListIter it = client->externalScreenOccupancies.begin();
+				it != client->externalScreenOccupancies.end();)
 				{
-					if (client->externalScreenOccupancies.find(client->screenCurrent)
-						== client->externalScreenOccupancies.end())
+					if (*it != client->screenCurrent)
 					{
-						cerr << "PLAYER_MOVE: The client's one and only external screen occupancy is not their current screen!!" << endl;
+						it = client->externalScreenOccupancies.erase(it);
+					}
+					else
+					{
+						++it;
 					}
 				}
 			}
@@ -115,28 +115,25 @@ void onReceive(const Packet& receivedPacket, Client* c)
 			{
 			case CROSS_LEFT:
 				xOffset = 0 + client->params.emitterPos.x;
-				targetScreen = c->screenCurrent->prev;
+				targetScreen = client->screenCurrent->prev;
 				break;
 
 			case CROSS_RIGHT:
 				xOffset = client->screenCurrent->size.x - client->params.emitterPos.x;
-				targetScreen = c->screenCurrent->next;
+				targetScreen = client->screenCurrent->next;
 				break;
 			}
 
 			if (targetScreen)
 			{
-				if (find(client->externalScreenOccupancies.begin(),
-					client->externalScreenOccupancies.end(),
-					targetScreen)
-					== client->externalScreenOccupancies.end()) // if the target screen is not an ESO yet
+				if (client->externalScreenOccupancies.find(targetScreen) == client->externalScreenOccupancies.end()) // if the target screen is not an ESO yet
 				{
 					Server::send(
 						PacketCreator::Get().PlayerNew(
 							targetScreen == client->screenOwned ? Client::MYSELF : client->id,
 							cross,
 							xOffset,
-							c->params.emitterPos.y / c->screenCurrent->size.y,
+							client->params.emitterPos.y / client->screenCurrent->size.y,
 							client->params
 							)
 						, targetScreen->owner);
@@ -161,23 +158,6 @@ void onReceive(const Packet& receivedPacket, Client* c)
 					}
 
 					client->screenCurrent = targetScreen;
-
-					/*
-					// the target screen is now our current screen, so we remove it from our list of ESO
-					for (Client::screen_iterator it = client->externalScreenOccupancies.begin();
-					it != client->externalScreenOccupancies.end();)
-					{
-						if (*it == targetScreen)
-						{
-							client->externalScreenOccupancies.erase(it);
-							return;
-						}
-						else
-						{
-							++it;
-						}
-					}
-					*/
 				}
 			}
 		}
@@ -185,7 +165,7 @@ void onReceive(const Packet& receivedPacket, Client* c)
 		Packet updatePosPacket = receivedPacket;
 
 		updatePosPacket.add(Client::MYSELF);
-		Server::send(updatePosPacket, c);
+		Server::send(updatePosPacket, client);
 
 		if (!client->externalScreenOccupancies.empty())
 		{
@@ -252,8 +232,6 @@ int main(int argc, char const *argv[])
 	server.setConnectHandler(onConnect);
 	server.setReceiveHandler(onReceive);
 	server.setDisconnectHandler(onDisconnect);
-
-	server.getClientManager().setScreenList(&screens);
 
 	if (!server.start(GameSettings::serverPort))
 	{
