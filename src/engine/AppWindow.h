@@ -10,8 +10,8 @@ class AppWindow : public sf::RenderWindow
 {
 public:
 	static const sf::Vector2i DEFAULT_RESOLUTION;
-	static const sf::Keyboard::Key KEY_FULLSCREEN;
-	static const sf::Keyboard::Key KEY_SCREENSHOT;
+	static const sf::Keyboard::Key DEFAULT_KEY_FULLSCREEN;
+	static const sf::Keyboard::Key DEFAULT_KEY_SCREENSHOT;
 
 	AppWindow();
 	~AppWindow();

@@ -16,6 +16,7 @@
 
 #include "Scene.h"
 #include "AppWindow.h"
+#include "PrintScreen.h"
 
 #include <iostream>
 
@@ -26,7 +27,7 @@ Scene::Scene(AppWindow &window, const std::string &name) :
 	m_id(++SCENE_ID),
 	m_sceneName(name)
 {
-	//std::cout << "Constructed: " << "Scene" << "[" << getID() << "] \"" << getName() << "\"" << std::endl;
+	//std::cout << "Constructed: " << "Scene " << getID() << " \"" << getName() << "\"" << std::endl;
 
 	scene_font.loadFromFile("Data/fonts/consolas.ttf");
 	scene_log.text().setFont(scene_font);
@@ -35,7 +36,7 @@ Scene::Scene(AppWindow &window, const std::string &name) :
 
 Scene::~Scene()
 {
-	//std::cout << "Destructed: " << "Scene" << "[" << getID() << "] \"" << getName() << "\"" << std::endl;
+	//std::cout << "Destructed: " << "Scene " << getID() << " \"" << getName() << "\"" << std::endl;
 }
 
 const std::string& Scene::getName() const
@@ -79,20 +80,21 @@ void Scene::handleEvent(const sf::Event &event)
 		break;
 
 	case sf::Event::KeyReleased:
-		if (k == AppWindow::KEY_FULLSCREEN)
+		if (k == AppWindow::DEFAULT_KEY_FULLSCREEN)
 		{
 			getWindow().toggleFullScreen();
 			updateViews();
 		}
-		else if (k == AppWindow::KEY_SCREENSHOT)
+		else if (k == AppWindow::DEFAULT_KEY_SCREENSHOT)
 		{
-			// TODO
+			static PrintScreen ps(m_window);
+			ps.printScreen();
 		}
-		// else { std::cout << "Key pressed: " << k << std::endl;
+		//std::cout << "Scene " << getID() << "> Key pressed: " << k << std::endl;
 		break;
 
 	default:
-		// std::cout << "Event type: " << event.type << std::endl;
+		//std::cout << "Scene " << getID() << "> Event type: " << event.type << std::endl;
 		break;
 	}
 }

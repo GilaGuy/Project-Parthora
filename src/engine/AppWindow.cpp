@@ -20,8 +20,8 @@
 #include <iostream>
 
 const sf::Vector2i AppWindow::DEFAULT_RESOLUTION(1366, 768);
-const sf::Keyboard::Key AppWindow::KEY_FULLSCREEN = sf::Keyboard::F11;
-const sf::Keyboard::Key AppWindow::KEY_SCREENSHOT = sf::Keyboard::F12;
+const sf::Keyboard::Key AppWindow::DEFAULT_KEY_FULLSCREEN = sf::Keyboard::F11;
+const sf::Keyboard::Key AppWindow::DEFAULT_KEY_SCREENSHOT = sf::Keyboard::F12;
 
 AppWindow::AppWindow() :
 	m_lastWindowSize(),
