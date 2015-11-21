@@ -13,6 +13,11 @@ struct Client
 
 	static const EntityID MYSELF = 0;
 
+	inline bool hasESOs()
+	{
+		return !externalScreenOccupancies.empty();
+	}
+
 	bool remESO(Screen* screenToRemove);
 
 	sf::TcpSocket socket;

@@ -215,9 +215,9 @@ void GameScene::update(const sf::Time& deltaTime)
 	for (Player* player : players.getList())
 	{
 		log += "\n>" + player->label.text().getString()
-			//+ "\n c: " + std::to_string(player->ps->getParticleCount())
 			+ "\n x: " + std::to_string(player->ps->emitterPos.x)
 			+ "\n y: " + std::to_string(player->ps->emitterPos.y)
+			//+ "\n c: " + std::to_string(player->ps->getParticleCount())
 			+ "\n";
 	}
 

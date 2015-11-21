@@ -24,7 +24,7 @@ Fireball::Fireball() : ParticleSystem(5000)
 {
 	lifeTimeMin = sf::seconds(0.f), lifeTimeMax = sf::seconds(2.f);
 	velMin = 3, velMax = 30, angleOffsetMin = -1.0f, angleOffsetMax = 1.0f;
-	spawnRate = 15;
+	spawnRate = 10;
 	colorBegin = sf::Color::Green;
 	colorEnd = sf::Color(128, 240, 255);
 	alphaMin = alphaMax = 128 / 10;

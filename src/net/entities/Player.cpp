@@ -48,17 +48,8 @@ PlayerManager::~PlayerManager()
 
 Player* PlayerManager::add(EntityID id, std::string name, Player::ParticleSystemType pst, const sf::Font& font)
 {
-	Player* newPlayer = nullptr;
-
-	// check if player already exists
-	for (Player* player : players)
-	{
-		if (player->id == id)
-		{
-			newPlayer = player;
-			break;
-		}
-	}
+	// try getting the player from the list
+	Player* newPlayer = get(id);
 
 	// create new player if they're not found
 	if (!newPlayer)
