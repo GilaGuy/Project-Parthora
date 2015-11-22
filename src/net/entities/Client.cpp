@@ -29,7 +29,7 @@ bool Client::remESO(Screen* screenToRemove)
 	return true;
 }
 
-EntityID ClientManager::ID_ENTITY = 0;
+EntityID ClientManager::ID_ENTITY = 1;
 
 ClientManager::ClientManager()
 {}
