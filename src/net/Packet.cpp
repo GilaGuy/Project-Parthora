@@ -36,6 +36,14 @@ std::vector<std::string> split(const std::string &s, char delim) {
 	return elems;
 }
 
+Packet& Packet::combine(const Packet& other)
+{
+	this->data.reserve(this->data.size() + other.data.size());
+	this->data.insert(this->data.end(), other.data.begin(), other.data.end());
+
+	return *this;
+}
+
 bool Packet::decode(const char* raw, size_t numOfBytes)
 {
 	std::string packetContents = std::string(raw, numOfBytes);

@@ -77,6 +77,8 @@ struct Packet
 		data.at(idx) = newstr;
 	}
 
+	Packet& combine(const Packet& other);
+
 	bool decode(const char* raw, size_t numOfBytes);
 	size_t encode(std::string& encoded) const;
 	std::string toString() const;

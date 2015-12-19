@@ -16,44 +16,30 @@
 
 #include "entities/Screen.h"
 
-PacketCreator& PacketCreator::Get()
+PacketCreator& PacketCreator::Create()
 {
 	static PacketCreator pc;
 	return pc;
 }
 
-Packet PacketCreator::PlayerInfo(
-	const EntityID clientID,
-	const ClientParams& params,
+Packet PacketCreator::P_Init(
+	const ClientParams& clientParams,
 	const Screen* playerScreen)
 {
 	Packet p;
-	p.type = PLAYER_INFO;
+	p.type = P_INIT;
 
-	p.add(clientID); //0
+	p.add(clientParams.name); //0
+	p.add(clientParams.pp.colorBegin.toInteger()); //1
+	p.add(clientParams.pp.colorEnd.toInteger()); //2
 
-	p.add(params.name); //1
-	p.add(params.pp.colorBegin.toInteger()); //2
-	p.add(params.pp.colorEnd.toInteger()); //3
-
-	p.add(playerScreen->size.x); //4
-	p.add(playerScreen->size.y); //5
+	p.add(playerScreen->size.x); //3
+	p.add(playerScreen->size.y); //4
 
 	return p;
 }
 
-Packet PacketCreator::PlayerMove(const sf::Vector2i delta)
-{
-	Packet p;
-	p.type = PLAYER_MOVE;
-
-	p.add(delta.x);
-	p.add(delta.y);
-
-	return p;
-}
-
-Packet PacketCreator::PlayerNew(
+Packet PacketCreator::P_New(
 	const EntityID clientID,
 	const Cross crossDir,
 	const float offsetX,
@@ -61,7 +47,7 @@ Packet PacketCreator::PlayerNew(
 	const ClientParams& params)
 {
 	Packet p;
-	p.type = PLAYER_NEW;
+	p.type = P_NEW;
 
 	p.add(clientID); //0
 
@@ -76,12 +62,57 @@ Packet PacketCreator::PlayerNew(
 	return p;
 }
 
-Packet PacketCreator::PlayerDel(const EntityID clientID)
+Packet PacketCreator::P_Del(const EntityID clientID)
 {
 	Packet p;
-	p.type = PLAYER_DEL;
+	p.type = P_DEL;
 
 	p.add(clientID);
+
+	return p;
+}
+
+Packet PacketCreator::P_Move(const sf::Vector2i delta)
+{
+	Packet p;
+	p.type = P_MOVE;
+
+	p.add(delta.x);
+	p.add(delta.y);
+
+	return p;
+}
+
+Packet PacketCreator::P_ParticleParams(const ParticleParams& particleParams)
+{
+	Packet p;
+	p.type = P_PARTICLE_PARAMS;
+
+	p.add(particleParams.colorBegin.toInteger());
+	p.add(particleParams.colorEnd.toInteger());
+
+	return p;
+}
+
+Packet PacketCreator::P_Screen(const Screen* screen)
+{
+	Packet p;
+	p.type = P_SCREEN;
+
+	p.add(screen->size.x);
+	p.add(screen->size.y);
+	p.add(screen->boundaryLeft);
+	p.add(screen->boundaryRight);
+
+	return p;
+}
+
+Packet PacketCreator::P_Name(const EntityID clientID, const std::string& name)
+{
+	Packet p;
+	p.type = P_NAME;
+
+	p.add(name);
 
 	return p;
 }

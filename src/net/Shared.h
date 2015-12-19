@@ -27,14 +27,15 @@ typedef sf::Uint16 EntityID;
 
 // ENUMS -----------------------------------------------------------------------
 
-// Listed in chronological order of a simple scenario in which
-// a particle is created from one screen, crosses to another screen, then disconnects.
 enum PacketType
 {
-	PLAYER_INFO,
-	PLAYER_MOVE,
-	PLAYER_NEW,
-	PLAYER_DEL
+	P_INIT,
+	P_NEW,
+	P_DEL,
+	P_MOVE,
+	P_PARTICLE_PARAMS,
+	P_SCREEN,
+	P_NAME,
 };
 
 enum Cross

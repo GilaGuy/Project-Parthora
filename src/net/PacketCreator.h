@@ -8,18 +8,15 @@ struct Screen;
 class PacketCreator
 {
 public:
-	static PacketCreator& Get();
+	static PacketCreator& Create();
 
-	Packet PlayerInfo
+	Packet P_Init
 		(
-			const EntityID clientID,
-			const ClientParams& params,
+			const ClientParams& clientParams,
 			const Screen* playerScreen
 			);
 
-	Packet PlayerMove(const sf::Vector2i delta);
-
-	Packet PlayerNew
+	Packet P_New
 		(
 			const EntityID clientID,
 			const Cross crossDir,
@@ -28,7 +25,19 @@ public:
 			const ClientParams& params
 			);
 
-	Packet PlayerDel(const EntityID clientID);
+	Packet P_Del(const EntityID clientID);
+
+	Packet P_Move(const sf::Vector2i delta);
+
+	Packet P_ParticleParams(const ParticleParams& particleParams);
+
+	Packet P_Screen(const Screen* screen);
+
+	Packet P_Name
+		(
+			const EntityID clientID,
+			const std::string& name
+			);
 
 private:
 	PacketCreator() {}

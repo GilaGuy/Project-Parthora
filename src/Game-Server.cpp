@@ -32,77 +32,61 @@ void onConnect(Client* client)
 	cout << "Client " << client->id << " [" << client->socket.getRemoteAddress() << "] " << "connected!" << endl;
 }
 
-void onReceive(const Packet& receivedPacket, Client* client)
+void onReceive(const Packet& receivedPacket, Client* sender)
 {
 	switch (receivedPacket.type)
 	{
-	case PLAYER_INFO:
+	case P_INIT:
 	{
 		// sync params
-		client->params.name = receivedPacket.get(1);
-		client->params.pp.colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(2));
-		client->params.pp.colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(3));
+		sender->params.name = receivedPacket.get(0);
+		sender->params.pp.colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(1));
+		sender->params.pp.colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(2));
 
 		// sync screen sizes/boundaries
-		client->screenOwned->size.x = receivedPacket.get<unsigned int>(4);
-		client->screenOwned->size.y = receivedPacket.get<unsigned int>(5);
-		client->screenOwned->boundaryLeft = client->screenOwned->size.x * 0.125f;
-		client->screenOwned->boundaryRight = client->screenOwned->size.x - client->screenOwned->boundaryLeft;
+		sender->screenOwned->size.x = receivedPacket.get<unsigned int>(3);
+		sender->screenOwned->size.y = receivedPacket.get<unsigned int>(4);
+		sender->screenOwned->boundaryLeft = sender->screenOwned->size.x * 0.125f;
+		sender->screenOwned->boundaryRight = sender->screenOwned->size.x - sender->screenOwned->boundaryLeft;
 
 		// center the emitter's position
-		client->params.emitterPos.x = client->screenOwned->size.x * 0.5f;
-		client->params.emitterPos.y = client->screenOwned->size.y * 0.5f;
+		sender->params.emitterPos.x = sender->screenOwned->size.x * 0.5f;
+		sender->params.emitterPos.y = sender->screenOwned->size.y * 0.5f;
 
-		Packet playerInfoPacket = receivedPacket;
-
-		playerInfoPacket.remLast();
-		playerInfoPacket.remLast();
-
-		Server::send(playerInfoPacket, client);
-
-		// reflect packet to client's ESO
-		if (client->hasESOs())
-		{
-			playerInfoPacket.replace(0, Packet::ToString(client->id));
-
-			for (Screen* s : client->externalScreenOccupancies)
-			{
-				Server::send(playerInfoPacket, s->owner);
-			}
-		}
+		Server::send(receivedPacket, sender);
 	}
 	break;
 
-	case PLAYER_MOVE:
+	case P_MOVE:
 	{
 		Cross cross;
 
-		client->params.emitterPos.x += receivedPacket.get<float>(0);
-		client->params.emitterPos.y += receivedPacket.get<float>(1);
+		sender->params.emitterPos.x += receivedPacket.get<float>(0);
+		sender->params.emitterPos.y += receivedPacket.get<float>(1);
 
-		cross = client->screenCurrent->checkBeyondBoundaries(client->params.emitterPos);
+		cross = sender->screenCurrent->checkBeyondBoundaries(sender->params.emitterPos);
 
 		if (cross == NO_CROSS) //>> if within boundaries
 		{
-			if (client->hasESOs())
+			if (sender->hasESOs())
 			{
-				if (client->screenCurrent == client->screenOwned) // coming home
+				if (sender->screenCurrent == sender->screenOwned) // coming home
 				{
-					for (Screen* s : client->externalScreenOccupancies)
+					for (Screen* s : sender->externalScreenOccupancies)
 					{
-						Server::send(PacketCreator::Get().PlayerDel(client->id), s->owner);
+						Server::send(PacketCreator::Create().P_Del(sender->id), s->owner);
 					}
-					client->externalScreenOccupancies.clear();
+					sender->externalScreenOccupancies.clear();
 				}
 				else
 				{
-					for (Client::ESOListIter it = client->externalScreenOccupancies.begin();
-					it != client->externalScreenOccupancies.end();)
+					for (Client::ESOListIter it = sender->externalScreenOccupancies.begin();
+					it != sender->externalScreenOccupancies.end();)
 					{
-						if (*it != client->screenCurrent)
+						if (*it != sender->screenCurrent)
 						{
-							Server::send(PacketCreator::Get().PlayerDel(client->id), (*it)->owner);
-							it = client->externalScreenOccupancies.erase(it);
+							Server::send(PacketCreator::Create().P_Del(sender->id), (*it)->owner);
+							it = sender->externalScreenOccupancies.erase(it);
 						}
 						else
 						{
@@ -120,34 +104,34 @@ void onReceive(const Packet& receivedPacket, Client* client)
 			switch (cross)
 			{
 			case CROSS_LEFT:
-				xOffset = 0 + client->params.emitterPos.x;
-				targetScreen = client->screenCurrent->prev;
+				xOffset = 0 + sender->params.emitterPos.x;
+				targetScreen = sender->screenCurrent->prev;
 				break;
 
 			case CROSS_RIGHT:
-				xOffset = client->screenCurrent->size.x - client->params.emitterPos.x;
-				targetScreen = client->screenCurrent->next;
+				xOffset = sender->screenCurrent->size.x - sender->params.emitterPos.x;
+				targetScreen = sender->screenCurrent->next;
 				break;
 			}
 
 			if (targetScreen)
 			{
-				if (client->externalScreenOccupancies.find(targetScreen) == client->externalScreenOccupancies.end()) // if the target screen is not an ESO yet
+				if (sender->externalScreenOccupancies.find(targetScreen) == sender->externalScreenOccupancies.end()) // if the target screen is not an ESO yet
 				{
 					Server::send(
-						PacketCreator::Get().PlayerNew(
-							targetScreen == client->screenOwned ? Client::MYSELF : client->id,
+						PacketCreator::Create().P_New(
+							targetScreen == sender->screenOwned ? Client::MYSELF : sender->id,
 							cross,
 							xOffset,
-							client->params.emitterPos.y / client->screenCurrent->size.y,
-							client->params
+							sender->params.emitterPos.y / sender->screenCurrent->size.y,
+							sender->params
 							)
 						, targetScreen->owner);
 
-					client->externalScreenOccupancies.insert(targetScreen);
+					sender->externalScreenOccupancies.insert(targetScreen);
 				}
 
-				cross = client->screenCurrent->checkBeyondScreens(client->params.emitterPos);
+				cross = sender->screenCurrent->checkBeyondScreens(sender->params.emitterPos);
 
 				//>> if beyond screen
 				if (cross != NO_CROSS)
@@ -155,15 +139,15 @@ void onReceive(const Packet& receivedPacket, Client* client)
 					switch (cross)
 					{
 					case CROSS_LEFT:
-						client->params.emitterPos.x = client->screenCurrent->size.x - client->params.emitterPos.x;
+						sender->params.emitterPos.x = sender->screenCurrent->size.x - sender->params.emitterPos.x;
 						break;
 
 					case CROSS_RIGHT:
-						client->params.emitterPos.x = client->params.emitterPos.x - client->screenCurrent->size.x;
+						sender->params.emitterPos.x = sender->params.emitterPos.x - sender->screenCurrent->size.x;
 						break;
 					}
 
-					client->screenCurrent = targetScreen;
+					sender->screenCurrent = targetScreen;
 				}
 			}
 		}
@@ -171,13 +155,13 @@ void onReceive(const Packet& receivedPacket, Client* client)
 		Packet updatePosPacket = receivedPacket;
 
 		updatePosPacket.add(Client::MYSELF);
-		Server::send(updatePosPacket, client);
+		Server::send(updatePosPacket, sender);
 
-		if (client->hasESOs())
+		if (sender->hasESOs())
 		{
 			updatePosPacket.remLast();
-			updatePosPacket.add(client->id);
-			for (Screen* s : client->externalScreenOccupancies)
+			updatePosPacket.add(sender->id);
+			for (Screen* s : sender->externalScreenOccupancies)
 			{
 				Server::send(updatePosPacket, s->owner);
 			}
@@ -194,7 +178,7 @@ void onDisconnect(Client* client)
 	// tell client's ESOs to delete the player
 	if (client->hasESOs())
 	{
-		Packet playerDeletePacket = PacketCreator::Get().PlayerDel(client->id);
+		Packet playerDeletePacket = PacketCreator::Create().P_Del(client->id);
 
 		for (Screen* s : client->externalScreenOccupancies)
 		{

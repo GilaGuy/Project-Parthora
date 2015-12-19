@@ -18,7 +18,7 @@
 #include <iomanip>
 
 Connection::Connection() :
-	isConnected(false),
+	is_connected(false),
 	clientThread(&Connection::receiveThread, this)
 {}
 
@@ -27,7 +27,7 @@ Connection::~Connection()
 
 bool Connection::start(std::string serverIP, unsigned short port)
 {
-	if (isConnected) return false;
+	if (is_connected) return false;
 
 	if (socket.connect(serverIP, port) != sf::Socket::Done) return false;
 
@@ -40,7 +40,7 @@ void Connection::stop()
 {
 	socket.disconnect();
 
-	isConnected = false;
+	is_connected = false;
 }
 
 bool Connection::pollEvent(Event& connEvent)
@@ -71,9 +71,14 @@ void Connection::send(const Packet& p)
 	std::cout << "SENT " << std::setfill('0') << std::setw(4) << length << " bytes>" << toSend << std::endl;
 }
 
+bool Connection::isConnected()
+{
+	return is_connected;
+}
+
 void Connection::receiveThread()
 {
-	isConnected = true;
+	is_connected = true;
 
 	mutexConnEvents.lock();
 
@@ -82,7 +87,7 @@ void Connection::receiveThread()
 
 	mutexConnEvents.unlock();
 
-	while (isConnected)
+	while (is_connected)
 	{
 		char buffer[Packet::MAX_SIZE];
 

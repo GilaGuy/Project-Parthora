@@ -41,6 +41,8 @@ public:
 
 	void send(const Packet& p);
 
+	bool isConnected();
+
 private:
 	void receiveThread();
 
@@ -50,7 +52,7 @@ private:
 	std::stack<Event> connEvents;
 	std::mutex mutexConnEvents;
 
-	bool isConnected;
+	bool is_connected;
 };
 
 #endif // CONNECTION_H

@@ -42,43 +42,27 @@ GameScene::~GameScene()
 void GameScene::onload()
 {
 	// initialize views
-
 	view_hud = view_main = getWindow().getCurrentView();
-
-	// establish connection
-
-	cout << "Connecting to..." << GameSettings::toString() << endl;
-
-	if (!conn.start(GameSettings::serverIP, GameSettings::serverPort))
-	{
-		cerr << "Failed to connect to the server!" << endl;
-	}
-
-	// create my player
-	me = players.add(Client::MYSELF, sf::IpAddress::getLocalAddress().toString(), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
 
 	// uncontrol the particle
 	setControlParticle(isControllingParticle = false);
 
+	// create my player
+	me = players.add(Client::MYSELF, sf::IpAddress::getLocalAddress().toString(), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
+
 	// center the player
-
 	sf::Vector2i center = sf::Vector2i(view_main.getCenter());
-
 	me->ps->emitterPos.x = center.x;
 	me->ps->emitterPos.y = center.y;
 
-	// update views
-	updateViews();
-
-	// make it as if we haven't connected yet to indicate when the server has talked back to us
-	onDisconnect();
-
 	// music settings
-
 	sf::Listener::setPosition(center.x, center.y, -100);
 	bgm.setPosition(center.x, center.y, 0);
 	bgm.setMinDistance(1000);
 	bgm.setLoop(true);
+
+	// initialize connection
+	initConnection();
 }
 
 void GameScene::unload()
@@ -100,7 +84,7 @@ void GameScene::updateViews()
 
 	myScreen->size = getWindow().getSize();
 
-	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, me->extractClientParams(), myScreen));
+	conn.send(PacketCreator::Create().P_Screen(myScreen));
 
 	if (isControllingParticle) getWindow().setMouseCursorVisible(false);
 	else getWindow().setMouseCursorVisible(true);
@@ -131,7 +115,7 @@ void GameScene::handleEvent(const sf::Event& event)
 				else
 				{
 					//cout << delta.x << ", " << delta.y << endl;
-					conn.send(PacketCreator::Get().PlayerMove(delta));
+					conn.send(PacketCreator::Create().P_Move(delta));
 				}
 			}
 		}
@@ -160,6 +144,9 @@ void GameScene::handleEvent(const sf::Event& event)
 			}
 			break;
 
+		case sf::Keyboard::C:
+			initConnection();
+			break;
 		case sf::Keyboard::V:
 			getWindow().setVerticalSyncEnabled(vSync = !vSync);
 			break;
@@ -252,6 +239,25 @@ void GameScene::render()
 	getWindow().display();
 }
 
+bool GameScene::initConnection()
+{
+	if (!conn.isConnected())
+	{
+		cout << "Connecting to..." << GameSettings::toString() << endl;
+
+		if (!conn.start(GameSettings::serverIP, GameSettings::serverPort))
+		{
+			cerr << "Failed to connect to the server!" << endl;
+			return false;
+		}
+
+		conn.send(PacketCreator::Create().P_Init(me->extractClientParams(), myScreen));
+		updateViews();
+	}
+
+	return true;
+}
+
 void GameScene::setControlParticle(bool arg)
 {
 	if (arg)
@@ -268,12 +274,12 @@ void GameScene::setControlParticle(bool arg)
 
 void GameScene::randomizeParticleColors(Player* player)
 {
-	ClientParams cp = player->extractClientParams();
+	ParticleParams pp;
 
-	cp.pp.colorBegin = sf::Color(rand() & 255, rand() & 255, rand() & 255);
-	cp.pp.colorEnd = sf::Color(rand() & 255, rand() & 255, rand() & 255);
+	pp.colorBegin = sf::Color(rand() & 255, rand() & 255, rand() & 255);
+	pp.colorEnd = sf::Color(rand() & 255, rand() & 255, rand() & 255);
 
-	conn.send(PacketCreator::Get().PlayerInfo(Client::MYSELF, cp, myScreen));
+	conn.send(PacketCreator::Create().P_ParticleParams(pp));
 }
 
 // NETWORK METHODS
@@ -305,25 +311,17 @@ void GameScene::onReceive(const Packet& receivedPacket)
 {
 	switch (receivedPacket.type)
 	{
-	case PLAYER_INFO:
+	case P_INIT:
 	{
-		EntityID id = receivedPacket.get<EntityID>(0);
-		Player* player = nullptr;
-
-		if (id == Client::MYSELF) player = me;
-		else
-		{
-			player = players.get(id);
-			if (player == nullptr) return;
-		}
-
-		player->setName(receivedPacket.get(1));
-		player->ps->colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(2));
-		player->ps->colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(3));
+		me->setName(receivedPacket.get(0));
+		me->ps->colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(1));
+		me->ps->colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(2));
+		myScreen->size.x = receivedPacket.get<sf::Uint32>(3);
+		myScreen->size.y = receivedPacket.get<sf::Uint32>(4);
 	}
 	break;
 
-	case PLAYER_NEW:
+	case P_NEW:
 	{
 		Player* newPlayer = players.add(receivedPacket.get<EntityID>(0), receivedPacket.get(4), Player::ParticleSystemType::FIREBALL, *scene_log.text().getFont());
 		if (newPlayer->id == Client::MYSELF) me = newPlayer;
@@ -344,13 +342,13 @@ void GameScene::onReceive(const Packet& receivedPacket)
 	}
 	break;
 
-	case PLAYER_DEL:
+	case P_DEL:
 	{
 		players.rem(receivedPacket.get<EntityID>(0));
 	}
 	break;
 
-	case PLAYER_MOVE:
+	case P_MOVE:
 	{
 		Player* player = players.get(receivedPacket.get<EntityID>(2));
 		if (player)
@@ -366,6 +364,4 @@ void GameScene::onReceive(const Packet& receivedPacket)
 void GameScene::onDisconnect()
 {
 	cout << "Lost connection to server!" << endl;
-
-	me->setName("UNCONNECTED");
 }
