@@ -23,7 +23,7 @@ struct Client
 	sf::TcpSocket socket;
 
 	Screen *screenOwned, *screenCurrent;
-	// Screens which this client is currently affecting
+	// Screens which this client is currently occupying
 	ESOList externalScreenOccupancies;
 
 	EntityID id;

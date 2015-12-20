@@ -34,7 +34,7 @@ void reflectPacketToSender(const Packet& packet, Client* sender)
 }
 
 // Sync ESO
-void reflectPacketToThoseAffectedBySender(const Packet& packet, Client* sender)
+void reflectPacketToSendersEso(const Packet& packet, Client* sender)
 {
 	if (sender->hasESOs())
 	{
@@ -46,7 +46,7 @@ void reflectPacketToThoseAffectedBySender(const Packet& packet, Client* sender)
 }
 
 // Sync Inverse ESO
-void reflectPacketToThoseInSenderScreen(const Packet& packet, const Client* sender)
+void reflectPacketToThoseInSendersScreen(const Packet& packet, const Client* sender)
 {
 	for (Client* c : server.getClients())
 	{
@@ -98,7 +98,7 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 		reflectPacketToSender(reflectPacket, sender);
 
 		reflectPacket.replace(reflectPacket.last(), sender->id);
-		reflectPacketToThoseAffectedBySender(reflectPacket, sender);
+		reflectPacketToSendersEso(reflectPacket, sender);
 	}
 	break;
 
@@ -113,7 +113,7 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 		reflectPacketToSender(reflectPacket, sender);
 
 		reflectPacket.replace(reflectPacket.last(), sender->id);
-		reflectPacketToThoseAffectedBySender(reflectPacket, sender);
+		reflectPacketToSendersEso(reflectPacket, sender);
 	}
 	break;
 
@@ -126,8 +126,7 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 
 		Packet reflectPacket = receivedPacket;
 
-		reflectPacketToSender(reflectPacket, sender);
-		reflectPacketToThoseAffectedBySender(reflectPacket, sender);
+		reflectPacketToThoseInSendersScreen(reflectPacket, sender);
 	}
 	break;
 
@@ -235,7 +234,7 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 		reflectPacketToSender(reflectPacket, sender);
 
 		reflectPacket.replace(reflectPacket.last(), sender->id);
-		reflectPacketToThoseAffectedBySender(reflectPacket, sender);
+		reflectPacketToSendersEso(reflectPacket, sender);
 	}
 	break;
 	}
