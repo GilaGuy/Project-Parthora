@@ -22,6 +22,7 @@ public:
 	void update(const sf::Time &deltaTime) override;
 	void render() override;
 
+	Player* getPlayer(EntityID id);
 	bool initConnection();
 	void setControlParticle(bool arg);
 	void randomizeParticleColors(Player* player);

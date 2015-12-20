@@ -23,6 +23,7 @@ struct Client
 	sf::TcpSocket socket;
 
 	Screen *screenOwned, *screenCurrent;
+	// Screens which this client is currently affecting
 	ESOList externalScreenOccupancies;
 
 	EntityID id;
@@ -40,6 +41,7 @@ public:
 
 	Client* add();
 	inline List& getList() { return clients; }
+	inline const ScreenManager& getScreenManager() { return screens; }
 	bool rem(EntityID id);
 	bool rem(Client* c);
 	ListIter rem(ListIter it);

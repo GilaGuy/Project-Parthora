@@ -27,17 +27,13 @@ public:
 
 	Packet P_Del(const EntityID clientID);
 
-	Packet P_Move(const sf::Vector2i delta);
+	Packet P_Name(const std::string& name);
 
 	Packet P_ParticleParams(const ParticleParams& particleParams);
 
 	Packet P_Screen(const Screen* screen);
 
-	Packet P_Name
-		(
-			const EntityID clientID,
-			const std::string& name
-			);
+	Packet P_Move(const sf::Vector2i delta);
 
 private:
 	PacketCreator() {}

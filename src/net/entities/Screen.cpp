@@ -32,7 +32,7 @@ Cross Screen::checkBeyondBoundaries(sf::Vector2f coords) const
 	}
 	else
 	{
-		return NO_CROSS;
+		return CROSS_NONE;
 	}
 }
 
@@ -48,7 +48,7 @@ Cross Screen::checkBeyondScreens(sf::Vector2f coords) const
 	}
 	else
 	{
-		return NO_CROSS;
+		return CROSS_NONE;
 	}
 }
 

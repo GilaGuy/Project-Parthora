@@ -19,7 +19,7 @@
 #include <iostream>
 #include <iomanip>
 
-void Server::send(Packet p, Client* c)
+void Server::Send(const Packet& p, Client* c)
 {
 	std::string toSend;
 	size_t length = p.encode(toSend);

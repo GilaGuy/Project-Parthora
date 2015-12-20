@@ -32,17 +32,19 @@ enum PacketType
 	P_INIT,
 	P_NEW,
 	P_DEL,
-	P_MOVE,
+
+	P_NAME,
 	P_PARTICLE_PARAMS,
 	P_SCREEN,
-	P_NAME,
+
+	P_MOVE,
 };
 
 enum Cross
 {
-	NO_CROSS,
+	CROSS_NONE,
 	CROSS_LEFT,
-	CROSS_RIGHT
+	CROSS_RIGHT,
 };
 
 //-----------------------------------------------------------------------------<

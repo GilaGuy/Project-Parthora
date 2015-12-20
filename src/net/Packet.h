@@ -45,16 +45,15 @@ struct Packet
 		return data.size();
 	}
 
+	inline size_t last() const
+	{
+		return getDataSize() - 1;
+	}
+
 	template < class T >
 	void add(T t)
 	{
-		std::stringstream converter;
-		std::string converted;
-
-		converter << t;
-		converter >> converted;
-
-		data.push_back(converted);
+		data.push_back(ToString(t));
 	}
 
 	inline void add(std::string str)
@@ -62,19 +61,18 @@ struct Packet
 		data.push_back(str);
 	}
 
-	inline std::string rem(size_t idx)
+	inline void rem(size_t idx)
 	{
-		data.erase(data.begin() + idx);
+		if (idx == getDataSize() - 1)
+			data.pop_back();
+		else
+			data.erase(data.begin() + idx);
 	}
 
-	inline void remLast()
+	template < class T >
+	inline void replace(size_t idx, T newValue)
 	{
-		data.pop_back();
-	}
-
-	inline void replace(size_t idx, std::string newstr)
-	{
-		data.at(idx) = newstr;
+		data.at(idx) = ToString(newValue);
 	}
 
 	Packet& combine(const Packet& other);

@@ -27,6 +27,36 @@ using namespace std;
 
 Server server;
 
+// Sync self
+void reflectPacketToSender(const Packet& packet, Client* sender)
+{
+	Server::Send(packet, sender);
+}
+
+// Sync ESO
+void reflectPacketToThoseAffectedBySender(const Packet& packet, Client* sender)
+{
+	if (sender->hasESOs())
+	{
+		for (Screen* s : sender->externalScreenOccupancies)
+		{
+			Server::Send(packet, s->owner);
+		}
+	}
+}
+
+// Sync Inverse ESO
+void reflectPacketToThoseInSenderScreen(const Packet& packet, const Client* sender)
+{
+	for (Client* c : server.getClients())
+	{
+		if (c->screenCurrent == sender->screenOwned)
+		{
+			Server::Send(packet, c);
+		}
+	}
+}
+
 void onConnect(Client* client)
 {
 	cout << "Client " << client->id << " [" << client->socket.getRemoteAddress() << "] " << "connected!" << endl;
@@ -46,14 +76,58 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 		// sync screen sizes/boundaries
 		sender->screenOwned->size.x = receivedPacket.get<unsigned int>(3);
 		sender->screenOwned->size.y = receivedPacket.get<unsigned int>(4);
-		sender->screenOwned->boundaryLeft = sender->screenOwned->size.x * 0.125f;
+		sender->screenOwned->boundaryLeft = sender->screenOwned->size.x * 0.25f;
 		sender->screenOwned->boundaryRight = sender->screenOwned->size.x - sender->screenOwned->boundaryLeft;
 
 		// center the emitter's position
 		sender->params.emitterPos.x = sender->screenOwned->size.x * 0.5f;
 		sender->params.emitterPos.y = sender->screenOwned->size.y * 0.5f;
 
-		Server::send(receivedPacket, sender);
+		// send back the packet (might want to remove the contents unless they are changed)
+		reflectPacketToSender(receivedPacket, sender);
+	}
+	break;
+
+	case P_NAME:
+	{
+		sender->params.name = receivedPacket.get(0);
+
+		Packet reflectPacket = receivedPacket;
+
+		reflectPacket.add(Client::MYSELF);
+		reflectPacketToSender(reflectPacket, sender);
+
+		reflectPacket.replace(reflectPacket.last(), sender->id);
+		reflectPacketToThoseAffectedBySender(reflectPacket, sender);
+	}
+	break;
+
+	case P_PARTICLE_PARAMS:
+	{
+		sender->params.pp.colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(0));
+		sender->params.pp.colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(1));
+
+		Packet reflectPacket = receivedPacket;
+
+		reflectPacket.add(Client::MYSELF);
+		reflectPacketToSender(reflectPacket, sender);
+
+		reflectPacket.replace(reflectPacket.last(), sender->id);
+		reflectPacketToThoseAffectedBySender(reflectPacket, sender);
+	}
+	break;
+
+	case P_SCREEN:
+	{
+		sender->screenOwned->size.x = receivedPacket.get<unsigned int>(0);
+		sender->screenOwned->size.y = receivedPacket.get<unsigned int>(1);
+		sender->screenOwned->boundaryLeft = sender->screenOwned->size.x * 0.125f;
+		sender->screenOwned->boundaryRight = sender->screenOwned->size.x - sender->screenOwned->boundaryLeft;
+
+		Packet reflectPacket = receivedPacket;
+
+		reflectPacketToSender(reflectPacket, sender);
+		reflectPacketToThoseAffectedBySender(reflectPacket, sender);
 	}
 	break;
 
@@ -66,7 +140,7 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 
 		cross = sender->screenCurrent->checkBeyondBoundaries(sender->params.emitterPos);
 
-		if (cross == NO_CROSS) //>> if within boundaries
+		if (cross == CROSS_NONE) //>> if within boundaries
 		{
 			if (sender->hasESOs())
 			{
@@ -74,7 +148,7 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 				{
 					for (Screen* s : sender->externalScreenOccupancies)
 					{
-						Server::send(PacketCreator::Create().P_Del(sender->id), s->owner);
+						Server::Send(PacketCreator::Create().P_Del(sender->id), s->owner);
 					}
 					sender->externalScreenOccupancies.clear();
 				}
@@ -85,7 +159,7 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 					{
 						if (*it != sender->screenCurrent)
 						{
-							Server::send(PacketCreator::Create().P_Del(sender->id), (*it)->owner);
+							Server::Send(PacketCreator::Create().P_Del(sender->id), (*it)->owner);
 							it = sender->externalScreenOccupancies.erase(it);
 						}
 						else
@@ -118,7 +192,7 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 			{
 				if (sender->externalScreenOccupancies.find(targetScreen) == sender->externalScreenOccupancies.end()) // if the target screen is not an ESO yet
 				{
-					Server::send(
+					Server::Send(
 						PacketCreator::Create().P_New(
 							targetScreen == sender->screenOwned ? Client::MYSELF : sender->id,
 							cross,
@@ -134,7 +208,7 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 				cross = sender->screenCurrent->checkBeyondScreens(sender->params.emitterPos);
 
 				//>> if beyond screen
-				if (cross != NO_CROSS)
+				if (cross != CROSS_NONE)
 				{
 					switch (cross)
 					{
@@ -148,24 +222,20 @@ void onReceive(const Packet& receivedPacket, Client* sender)
 					}
 
 					sender->screenCurrent = targetScreen;
+
+					// update sender's screen properties
+					Server::Send(PacketCreator::Create().P_Screen(sender->screenCurrent), sender);
 				}
 			}
 		}
 
-		Packet updatePosPacket = receivedPacket;
+		Packet reflectPacket = receivedPacket;
 
-		updatePosPacket.add(Client::MYSELF);
-		Server::send(updatePosPacket, sender);
+		reflectPacket.add(Client::MYSELF);
+		reflectPacketToSender(reflectPacket, sender);
 
-		if (sender->hasESOs())
-		{
-			updatePosPacket.remLast();
-			updatePosPacket.add(sender->id);
-			for (Screen* s : sender->externalScreenOccupancies)
-			{
-				Server::send(updatePosPacket, s->owner);
-			}
-		}
+		reflectPacket.replace(reflectPacket.last(), sender->id);
+		reflectPacketToThoseAffectedBySender(reflectPacket, sender);
 	}
 	break;
 	}
@@ -182,7 +252,7 @@ void onDisconnect(Client* client)
 
 		for (Screen* s : client->externalScreenOccupancies)
 		{
-			Server::send(playerDeletePacket, s->owner);
+			Server::Send(playerDeletePacket, s->owner);
 		}
 	}
 
@@ -200,29 +270,6 @@ void onDisconnect(Client* client)
 
 int main(int argc, char const *argv[])
 {
-	/* // Screen & Client Manager test
-	ScreenManager sm;
-	ClientManager cm(&sm);
-	Screen* curr = nullptr;
-	bool success;
-
-	cm.add(new Client());
-	cm.add(new Client());
-	cm.add(new Client());
-
-	sm.print();
-
-	success = sm.rem(1);
-
-	sm.print();
-
-	sm.clear();
-
-	sm.print();
-
-	return getchar();
-	*/
-
 	if (argc > 1)
 	{
 		GameSettings::serverPort = static_cast<unsigned short>(stoul(argv[1]));

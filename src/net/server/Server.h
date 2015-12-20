@@ -13,7 +13,7 @@ class ClientManager;
 class Server
 {
 public:
-	static void send(Packet p, Client* c);
+	static void Send(const Packet& p, Client* c);
 
 	Server();
 	~Server();

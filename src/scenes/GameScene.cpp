@@ -43,6 +43,7 @@ void GameScene::onload()
 {
 	// initialize views
 	view_hud = view_main = getWindow().getCurrentView();
+	updateViews();
 
 	// uncontrol the particle
 	setControlParticle(isControllingParticle = false);
@@ -186,25 +187,29 @@ void GameScene::update(const sf::Time& deltaTime)
 
 	std::string log;
 
-	log = getWindow().getName() + " by " + "Melvin Loho"
+	log =
+		getWindow().getName() + " by " + "Melvin Loho"
 		+ "\n"
 		+ "\n"
 		+ "[FPS]: " + std::to_string(getWindow().getFPS())
 		+ "\n"
 		+ "\n[RENDERER]"
-		+ "\nDraw calls: " + std::to_string(renderer.getDrawCallCount())
-		+ "\nSprites   : " + std::to_string(renderer.getSpriteCount())
+		+ "\n draw calls: " + std::to_string(renderer.getDrawCallCount())
+		+ "\n sprites   : " + std::to_string(renderer.getSpriteCount())
 		+ "\n"
-		+ "\n[PARTICLES]"
-		+ "\nTotal count: " + std::to_string(ParticleSystem::TotalParticleCount)
+		+ "\n[SCREEN]"
+		"\n x: " + std::to_string(myScreen->size.x)
+		+ "\n y: " + std::to_string(myScreen->size.y)
+		+ "\n"
+		+ "\n[PARTICLES]: " + std::to_string(ParticleSystem::TotalParticleCount)
 		+ "\n";
 
 	for (Player* player : players.getList())
 	{
-		log += "\n>" + player->label.text().getString()
-			+ "\n x: " + std::to_string(player->ps->emitterPos.x)
-			+ "\n y: " + std::to_string(player->ps->emitterPos.y)
-			//+ "\n c: " + std::to_string(player->ps->getParticleCount())
+		log +=
+			"\n >" + player->label.text().getString()
+			+ "\n  x: " + std::to_string(player->ps->emitterPos.x)
+			+ "\n  y: " + std::to_string(player->ps->emitterPos.y)
 			+ "\n";
 	}
 
@@ -239,6 +244,14 @@ void GameScene::render()
 	getWindow().display();
 }
 
+Player* GameScene::getPlayer(EntityID id)
+{
+	if (id == Client::MYSELF)
+		return me;
+	else
+		return players.get(id);
+}
+
 bool GameScene::initConnection()
 {
 	if (!conn.isConnected())
@@ -252,7 +265,6 @@ bool GameScene::initConnection()
 		}
 
 		conn.send(PacketCreator::Create().P_Init(me->extractClientParams(), myScreen));
-		updateViews();
 	}
 
 	return true;
@@ -348,9 +360,40 @@ void GameScene::onReceive(const Packet& receivedPacket)
 	}
 	break;
 
+	case P_NAME:
+	{
+		Player* player = getPlayer(receivedPacket.get<EntityID>(receivedPacket.last()));
+
+		if (player)
+		{
+			player->setName(receivedPacket.get(0));
+		}
+	}
+	break;
+
+	case P_PARTICLE_PARAMS:
+	{
+		Player* player = getPlayer(receivedPacket.get<EntityID>(receivedPacket.last()));
+
+		if (player)
+		{
+			me->ps->colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(0));
+			me->ps->colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(1));
+		}
+	}
+	break;
+
+	case P_SCREEN:
+	{
+		myScreen->size.x = receivedPacket.get<sf::Uint32>(0);
+		myScreen->size.y = receivedPacket.get<sf::Uint32>(1);
+	}
+	break;
+
 	case P_MOVE:
 	{
-		Player* player = players.get(receivedPacket.get<EntityID>(2));
+		Player* player = getPlayer(receivedPacket.get<EntityID>(receivedPacket.last()));
+
 		if (player)
 		{
 			player->ps->emitterPos.x += receivedPacket.get<float>(0);

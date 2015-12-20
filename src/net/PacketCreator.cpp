@@ -72,13 +72,12 @@ Packet PacketCreator::P_Del(const EntityID clientID)
 	return p;
 }
 
-Packet PacketCreator::P_Move(const sf::Vector2i delta)
+Packet PacketCreator::P_Name(const std::string& name)
 {
 	Packet p;
-	p.type = P_MOVE;
+	p.type = P_NAME;
 
-	p.add(delta.x);
-	p.add(delta.y);
+	p.add(name);
 
 	return p;
 }
@@ -101,18 +100,17 @@ Packet PacketCreator::P_Screen(const Screen* screen)
 
 	p.add(screen->size.x);
 	p.add(screen->size.y);
-	p.add(screen->boundaryLeft);
-	p.add(screen->boundaryRight);
 
 	return p;
 }
 
-Packet PacketCreator::P_Name(const EntityID clientID, const std::string& name)
+Packet PacketCreator::P_Move(const sf::Vector2i delta)
 {
 	Packet p;
-	p.type = P_NAME;
+	p.type = P_MOVE;
 
-	p.add(name);
+	p.add(delta.x);
+	p.add(delta.y);
 
 	return p;
 }
