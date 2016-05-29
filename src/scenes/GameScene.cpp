@@ -68,13 +68,13 @@ void GameScene::onload()
 
 void GameScene::unload()
 {
-	getWindow().setMouseCursorVisible(true);
+	conn.stop();
 
 	players.clear();
 
 	bgm.stop();
 
-	conn.stop();
+	getWindow().setMouseCursorVisible(true);
 }
 
 void GameScene::updateViews()
@@ -377,8 +377,8 @@ void GameScene::onReceive(const Packet& receivedPacket)
 
 		if (player)
 		{
-			me->ps->colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(0));
-			me->ps->colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(1));
+			player->ps->colorBegin = sf::Color(receivedPacket.get<sf::Uint32>(0));
+			player->ps->colorEnd = sf::Color(receivedPacket.get<sf::Uint32>(1));
 		}
 	}
 	break;
